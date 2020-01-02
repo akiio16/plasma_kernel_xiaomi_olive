@@ -1386,3 +1386,8 @@ source "arch/arm64/crypto/Kconfig"
 endif
 
 source "lib/Kconfig"
+
+config PROJECT_OLIVE
+	bool "OLIVE project support"
+	help
+	  This option enables support project name

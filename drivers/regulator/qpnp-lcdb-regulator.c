@@ -595,7 +595,7 @@ static int qpnp_lcdb_ttw_enter(struct qpnp_lcdb *lcdb)
 	if (rc < 0)
 		return rc;
 
-#ifdef PROJECT_PINE
+#ifdef CONFIG_PROJECT_PINE
 	val = 0;
 #else
 	val = 2;
@@ -1308,7 +1308,7 @@ static int qpnp_lcdb_ldo_regulator_enable(struct regulator_dev *rdev)
 	return rc;
 }
 
-#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
+#if defined(CONFIG_PROJECT_OLIVE) || defined(CONFIG_PROJECT_OLIVELITE) || defined(CONFIG_PROJECT_OLIVEWOOD)
 extern bool ilitek_gesture_flag;
 extern bool nvt_gesture_flag;
 extern bool fts_gesture_flag;
@@ -1320,7 +1320,7 @@ static int qpnp_lcdb_ldo_regulator_disable(struct regulator_dev *rdev)
 	struct qpnp_lcdb *lcdb  = rdev_get_drvdata(rdev);
 
 	mutex_lock(&lcdb->lcdb_mutex);
-#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
+#if defined(CONFIG_PROJECT_OLIVE) || defined(CONFIG_PROJECT_OLIVELITE) || defined(CONFIG_PROJECT_OLIVEWOOD)
 	if ((ilitek_gesture_flag != true) && (nvt_gesture_flag != true) && (fts_gesture_flag != true))
 		rc = qpnp_lcdb_disable(lcdb);
 #else
@@ -1404,7 +1404,7 @@ static int qpnp_lcdb_ncp_regulator_disable(struct regulator_dev *rdev)
 	struct qpnp_lcdb *lcdb  = rdev_get_drvdata(rdev);
 
 	mutex_lock(&lcdb->lcdb_mutex);
-#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
+#if defined(CONFIG_PROJECT_OLIVE) || defined(CONFIG_PROJECT_OLIVELITE) || defined(CONFIG_PROJECT_OLIVEWOOD)
 	if ((ilitek_gesture_flag != true) && (nvt_gesture_flag != true) && (fts_gesture_flag != true))
 		rc = qpnp_lcdb_disable(lcdb);
 #else

@@ -2342,3 +2342,18 @@ endif
 source "lib/Kconfig"
 
 source "arch/arm/kvm/Kconfig"
+
+config PROJECT_OLIVELITE
+	bool "OLIVELITE project support"
+	help
+	  This option enables support project name
+
+config PROJECT_OLIVEWOOD
+	bool "OLIVEWOOD project support"
+	help
+	  This option enables support project name
+
+config PROJECT_PINE
+	bool "PINE project support"
+	help
+	  This option enables support project name

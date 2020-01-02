@@ -33,7 +33,7 @@
 #include "mdss_debug.h"
 
 extern struct ktd3137_chip *bkl_chip;
-#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
+#if defined(CONFIG_PROJECT_OLIVE) || defined(CONFIG_PROJECT_OLIVELITE) || defined(CONFIG_PROJECT_OLIVEWOOD)
 extern bool  is_ilitek_tp;
 extern void ilitek_call_resume_work(void);
 extern void lcd_call_tp_reset(int i);
@@ -383,7 +383,7 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
 	struct mdss_panel_info *pinfo = NULL;
 	int i, rc = 0;
-#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
+#if defined(CONFIG_PROJECT_OLIVE) || defined(CONFIG_PROJECT_OLIVELITE) || defined(CONFIG_PROJECT_OLIVEWOOD)
 	extern char *saved_command_line;
 	char *rf_panel_name = (char *)strnstr(saved_command_line, ":qcom,", strlen(saved_command_line));
 #endif
@@ -476,7 +476,7 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 					goto exit;
 				}
 			}
-#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
+#if defined(CONFIG_PROJECT_OLIVE) || defined(CONFIG_PROJECT_OLIVELITE) || defined(CONFIG_PROJECT_OLIVEWOOD)
 			if (is_focal_tp) {
 				lcd_call_tp_reset(0);
 				gpio_set_value((ctrl_pdata->rst_gpio), pdata->panel_info.rst_seq[0]);
@@ -509,7 +509,7 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 					(pinfo->rst_seq[i] * 1000) + 10);
 			}
 #endif
-#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
+#if defined(CONFIG_PROJECT_OLIVE) || defined(CONFIG_PROJECT_OLIVELITE) || defined(CONFIG_PROJECT_OLIVEWOOD)
 			rf_panel_name += strlen(":qcom,");
 			pr_info(" %s res=%d\n", rf_panel_name, strncmp(rf_panel_name, "mdss_dsi_nvt36525b_hdplus_video_c3i", strlen("mdss_dsi_nvt36525b_hdplus_video_c3i")));
 			if (!strncmp(rf_panel_name, "mdss_dsi_nvt36525b_hdplus_video_c3i", strlen("mdss_dsi_nvt36525b_hdplus_video_c3i"))) {
@@ -525,7 +525,7 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 			}
 #endif
 
-#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
+#if defined(CONFIG_PROJECT_OLIVE) || defined(CONFIG_PROJECT_OLIVELITE) || defined(CONFIG_PROJECT_OLIVEWOOD)
 			if (is_ilitek_tp) {
 				pr_err("%s:  ILITEK  LCD Call TP Reset start! \n", __func__);
 				ilitek_call_resume_work();
@@ -586,7 +586,7 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 			usleep_range(100, 110);
 			gpio_free(ctrl_pdata->disp_en_gpio);
 		}
-#ifdef PROJECT_PINE
+#ifdef CONFIG_PROJECT_PINE
 		gpio_set_value((ctrl_pdata->rst_gpio), 0);
 		gpio_free(ctrl_pdata->rst_gpio);
 #else
