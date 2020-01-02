@@ -161,7 +161,7 @@ void compute_work_load(struct devfreq_dev_status *stats,
 	 */
 	acc_total += stats->total_time;
 	busy = (u64)stats->busy_time * (stats->current_frequency/1000000);
-	do_div((busy, devfreq->profile->freq_table[0]/1000000));
+	do_div(busy, devfreq->profile->freq_table[0]/1000000);
 	acc_relative_busy += busy;
 	spin_unlock(&sample_lock);
 }
