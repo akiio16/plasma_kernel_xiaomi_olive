@@ -1806,7 +1806,7 @@ TRACE_EVENT(sched_get_nr_running_avg,
 	TP_printk("avg=%d big_avg=%d iowait_avg=%d max_nr=%u big_max_nr=%u",
 		__entry->avg, __entry->big_avg, __entry->iowait_avg,
 		__entry->max_nr, __entry->big_max_nr)
-);
+ );
 
 TRACE_EVENT(core_ctl_eval_need,
 
