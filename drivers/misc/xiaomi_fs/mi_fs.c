@@ -6,7 +6,7 @@
 #include <linux/err.h>
 #include <linux/uaccess.h>
 #include <linux/of_gpio.h>
-#include <asm/gpio.h>
+//#include <asm/gpio.h>
 #include <linux/gpio_keys.h>
 #define cpumaxfreq_proc_name "cpumaxfreq"
 static struct proc_dir_entry * cpumaxfreq_proc = NULL;
