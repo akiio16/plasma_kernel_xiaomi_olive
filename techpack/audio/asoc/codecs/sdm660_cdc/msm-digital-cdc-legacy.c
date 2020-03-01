@@ -1,4 +1,5 @@
 /* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2019 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -222,7 +223,7 @@ static int msm_dig_cdc_put_dec_enum(struct snd_kcontrol *kcontrol,
 		goto out;
 	}
 
-	dev_dbg(w->dapm->dev, "%s(): widget = %s decimator = %u dec_mux = %u\n"
+	dev_err(w->dapm->dev, "%s(): widget = %s decimator = %u dec_mux = %u\n"
 		, __func__, w->name, decimator, dec_mux);
 
 	switch (decimator) {
@@ -260,7 +261,7 @@ static int msm_dig_cdc_codec_config_compander(struct snd_soc_codec *codec,
 	int comp_ch_bits_set = 0x03;
 	int comp_ch_value;
 
-	dev_dbg(codec->dev, "%s: event %d shift %d, enabled %d\n",
+	dev_err(codec->dev, "%s: event %d shift %d, enabled %d\n",
 		__func__, event, interp_n,
 		dig_cdc->comp_enabled[interp_n]);
 
@@ -371,7 +372,7 @@ static int msm_dig_cdc_codec_enable_interpolator(struct snd_soc_dapm_widget *w,
 	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
 	struct msm_dig_priv *msm_dig_cdc = snd_soc_codec_get_drvdata(codec);
 
-	dev_dbg(codec->dev, "%s %d %s\n", __func__, event, w->name);
+	dev_err(codec->dev, "%s %d %s\n", __func__, event, w->name);
 
 	if (w->shift >= MSM89XX_RX_MAX || w->shift < 0) {
 		dev_err(codec->dev, "%s: wrong RX index: %d\n",
@@ -639,7 +640,7 @@ static void tx_hpf_corner_freq_callback(struct work_struct *work)
 	tx_mux_ctl_reg = MSM89XX_CDC_CORE_TX1_MUX_CTL +
 			(hpf_work->decimator - 1) * 32;
 
-	dev_dbg(codec->dev, "%s(): decimator %u hpf_cut_of_freq 0x%x\n",
+	dev_err(codec->dev, "%s(): decimator %u hpf_cut_of_freq 0x%x\n",
 		 __func__, hpf_work->decimator, (unsigned int)hpf_cut_of_freq);
 	if (msm_dig_cdc->update_clkdiv)
 		msm_dig_cdc->update_clkdiv(msm_dig_cdc->handle, 0x51);
@@ -913,7 +914,7 @@ static int msm_dig_cdc_codec_enable_dec(struct snd_soc_dapm_widget *w,
 	char *dec_num;
 
 	pdata = snd_soc_card_get_drvdata(codec->component.card);
-	dev_dbg(codec->dev, "%s %d\n", __func__, event);
+	dev_err(codec->dev, "%s %d\n", __func__, event);
 
 	widget_name = kstrndup(w->name, 15, GFP_KERNEL);
 	if (!widget_name)
@@ -944,7 +945,7 @@ static int msm_dig_cdc_codec_enable_dec(struct snd_soc_dapm_widget *w,
 		goto out;
 	}
 
-	dev_dbg(codec->dev,
+	dev_err(codec->dev,
 		"%s(): widget = %s dec_name = %s decimator = %u\n", __func__,
 		w->name, dec_name, decimator);
 
