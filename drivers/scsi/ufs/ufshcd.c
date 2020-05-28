@@ -6866,7 +6866,6 @@ static irqreturn_t ufshcd_intr(int irq, void *__hba)
 
 	spin_lock(hba->host->host_lock);
 	intr_status = ufshcd_readl(hba, REG_INTERRUPT_STATUS);
-<<<<<<< HEAD
 	hba->ufs_stats.last_intr_status = intr_status;
 	hba->ufs_stats.last_intr_ts = ktime_get();
 	/*
@@ -6893,28 +6892,6 @@ static irqreturn_t ufshcd_intr(int irq, void *__hba)
 					UFSHCI_REG_SPACE_SIZE);
 	}
 
-=======
-
-	/*
-	 * There could be max of hba->nutrs reqs in flight and in worst case
-	 * if the reqs get finished 1 by 1 after the interrupt status is
-	 * read, make sure we handle them by checking the interrupt status
-	 * again in a loop until we process all of the reqs before returning.
-	 */
-	do {
-		enabled_intr_status =
-			intr_status & ufshcd_readl(hba, REG_INTERRUPT_ENABLE);
-		if (intr_status)
-			ufshcd_writel(hba, intr_status, REG_INTERRUPT_STATUS);
-		if (enabled_intr_status) {
-			ufshcd_sl_intr(hba, enabled_intr_status);
-			retval = IRQ_HANDLED;
-		}
-
-		intr_status = ufshcd_readl(hba, REG_INTERRUPT_STATUS);
-	} while (intr_status && --retries);
-
->>>>>>> df9406a728392fc637abb4a1dcc2d9f6bfb83abb
 	spin_unlock(hba->host->host_lock);
 	return retval;
 }
@@ -8452,7 +8429,6 @@ static int ufshcd_query_ioctl(struct ufs_hba *hba, u8 lun, void __user *buffer)
 			goto out_release_mem;
 		}
 
-<<<<<<< HEAD
 		switch (ioctl_data->idn) {
 		case QUERY_ATTR_IDN_BOOT_LU_EN:
 			index = 0;
@@ -8471,12 +8447,6 @@ static int ufshcd_query_ioctl(struct ufs_hba *hba, u8 lun, void __user *buffer)
 		err = ufshcd_query_attr(hba, ioctl_data->opcode,
 					ioctl_data->idn, index, 0, &att);
 		break;
-=======
-		/* Add required well known logical units to scsi mid layer */
-		ret = ufshcd_scsi_add_wlus(hba);
-		if (ret)
-			goto out;
->>>>>>> df9406a728392fc637abb4a1dcc2d9f6bfb83abb
 
 	case UPIU_QUERY_OPCODE_READ_FLAG:
 		switch (ioctl_data->idn) {
