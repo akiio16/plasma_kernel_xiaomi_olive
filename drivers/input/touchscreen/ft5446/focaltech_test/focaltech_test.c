@@ -3,7 +3,7 @@
  * FocalTech TouchScreen driver.
  *
  * Copyright (c) 2012-2018, FocalTech Systems, Ltd., all rights reserved.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -763,11 +763,11 @@ bool compare_detailthreshold_data_incell(int *data, int *data_min, int *data_max
 	int rx_num = test_data.screen_param.rx_num;
 	int tx_num = test_data.screen_param.tx_num;
 	int key_num = test_data.screen_param.key_num_total;
-
+	// VA
 	for (row = 0; row < tx_num; row++) {
 		for (col = 0; col < rx_num; col++) {
 			if (test_data.incell_detail_thr.invalid_node[row * rx_num + col] == 0)
-				continue;
+				continue; //Invalid Node
 			tmp_min = data_min[row * rx_num + col];
 			tmp_max = data_max[row * rx_num + col];
 			value = data[row * rx_num + col];
@@ -778,7 +778,7 @@ bool compare_detailthreshold_data_incell(int *data, int *data_min, int *data_max
 			}
 		}
 	}
-
+	// Key
 	if (include_key) {
 		if (test_data.screen_param.key_flag) {
 			key_num = test_data.screen_param.key_num;
@@ -786,7 +786,7 @@ bool compare_detailthreshold_data_incell(int *data, int *data_min, int *data_max
 		row = test_data.screen_param.tx_num;
 		for (col = 0; col < key_num; col++) {
 			if (test_data.incell_detail_thr.invalid_node[rx_num * tx_num + col] == 0)
-				continue;
+				continue; //Invalid Node
 			tmp_min = data_min[rx_num * tx_num + col];
 			tmp_max = data_max[rx_num * tx_num + col];
 			value = data[rx_num * tx_num + col];
@@ -950,7 +950,7 @@ void merge_all_testdata(void)
 {
 	int len = 0;
 
-
+	//Msg Area, Add Line1
 	test_data.len_store_msg_area += snprintf(test_data.store_msg_area, PAGE_SIZE, "ECC, 85, 170, IC Name, %s, IC Code, %x\n",  test_data.ini_ic_name,  test_data.screen_param.selected_ic);
 
 	/* Add the head part of Line2 */
@@ -1434,7 +1434,7 @@ static int fts_ito_test_show(struct seq_file *file, void *data)
 		break;
 	}
 
-
+	//I2C_Communication result
 	if ((test_data.test_item[FT5X46_ENTER_FACTORY_MODE].testresult)) {
 		test_result_bmp[I2C_COMMUNICATION] = 'P';
 	} else {
@@ -1442,7 +1442,7 @@ static int fts_ito_test_show(struct seq_file *file, void *data)
 		return 0;
 	}
 
-
+	//Cap Rawdata result
 	if ((test_data.test_item[FT5X46_RAWDATA_TEST].testresult)
 		 && (test_data.test_item[FT5X46_SCAP_CB_TEST].testresult)
 		 && (test_data.test_item[FT5X46_SCAP_RAWDATA_TEST].testresult)) {
@@ -1451,7 +1451,7 @@ static int fts_ito_test_show(struct seq_file *file, void *data)
 		test_result_bmp[CAP_RAWDATA] = 'F';
 	}
 
-
+	//open test result
 	test_data.test_item[FT5X46_PANELDIFFER_UNIFORMITY_TEST].testresult = 1;
 	if ((test_data.test_item[FT5X46_PANELDIFFER_TEST].testresult)
 		 && (test_data.test_item[FT5X46_PANELDIFFER_UNIFORMITY_TEST].testresult)) {
@@ -1460,14 +1460,14 @@ static int fts_ito_test_show(struct seq_file *file, void *data)
 		test_result_bmp[OPEN_DATA] = 'F';
 	}
 
-
+	//short test result
 	if (test_data.test_item[FT5X46_WEAK_SHORT_CIRCUIT_TEST].testresult) {
 		test_result_bmp[SHORT_DATA] = 'P';
 	} else {
 		test_result_bmp[SHORT_DATA] = 'F';
 	}
 
-
+	//other test result
 	test_result_bmp[OTHER_DATA] = 'P';
 
 	seq_printf(file, "0%c-1%c-2%c-3%c-4%c\n",
@@ -1477,7 +1477,7 @@ static int fts_ito_test_show(struct seq_file *file, void *data)
 		test_result_bmp[SHORT_DATA],
 		test_result_bmp[OTHER_DATA]);
 
-
+	//seq_printf(file, "0P-1P-2P-3P-4P\n");
 
 	FTS_IS_TESTING_FLAG = 0;
 	FTS_TEST_FUNC_EXIT();
@@ -1807,7 +1807,7 @@ static ssize_t fts_tp_selftest_write(struct file *file, const char __user *buf, 
 			retval = -EFAULT;
 		}
 	} else {
-
+		/////////////////////////////////////////////////////// I2C_TEST,
 		retval = fts_get_ic_information(ts_data);
 		if (ERROR_CODE_OK != retval) {
 			FTS_TEST_ERROR("I2C test error.\n");

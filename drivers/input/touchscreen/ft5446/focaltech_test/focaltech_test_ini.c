@@ -1,6 +1,5 @@
 /************************************************************************
 * Copyright (C) 2012-2018, Focaltech Systems (R)£¬All Rights Reserved.
-* Copyright (C) 2019 XiaoMi, Inc.
 *
 * File Name: focaltech_test_ini.c
 *
@@ -70,10 +69,10 @@ int ini_get_key(char *filedata, char *section, char *key, char *value)
 		if (fts_strncmp(section, test_data.ini_data[i].section_name,
 						test_data.ini_data[i].section_name_len) != 0)
 			continue;
-
+		//FTS_TEST_DBG("Section Name:%s, Len:%d\n",  test_data.ini_data[i].section_name, test_data.ini_data[i].section_name_len);
 		if (strlen(key) == test_data.ini_data[i].key_name_len) {
 			if (fts_strncmp(key, test_data.ini_data[i].key_name,  test_data.ini_data[i].key_name_len) == 0)
-
+				//test_data.ini_data[i].key_name_len) == 0)
 			{
 				memcpy(value, test_data.ini_data[i].key_value, test_data.ini_data[i].key_value_len);
 				ret = 0;
@@ -169,16 +168,16 @@ static int ini_file_get_line(char *filedata, char *buffer, int maxlen)
 	for (i = 0, j = 0; i < maxlen; j++) {
 		ch1 = filedata[j];
 		iRetNum = j + 1;
-		if (ch1 == '\n' || ch1 == '\r') {
+		if (ch1 == '\n' || ch1 == '\r') { //line end
 			ch1 = filedata[j + 1];
 			if (ch1 == '\n' || ch1 == '\r') {
 				iRetNum++;
 			}
 
-			break;
+			break; // line breaks
 		} else if (ch1 == 0x00) {
 			iRetNum = -1;
-			break;
+			break; //file end
 		} else {
 			buffer[i++] = ch1;    /* ignore carriage return */
 		}
@@ -312,10 +311,10 @@ int ini_get_key_data(char *filedata)
 		if (n == 0 || buf1[0] == CFG_NTS)
 			continue;       /* A blank line or a comment line */
 		ret = CFG_ERR_FILE_FORMAT;
-
+		//get section name
 		if (n > 2 && ((buf1[0] == CFG_SSL && buf1[n - 1] != CFG_SSR))) {
 			FTS_TEST_ERROR("Bad Section:%s\n",  buf1);
-			goto cfg_scts_end;
+			goto cfg_scts_end;//bad section
 		}
 
 		if (buf1[0] == CFG_SSL) {
@@ -330,7 +329,7 @@ int ini_get_key_data(char *filedata)
 
 			continue;
 		}
-
+		//get section name end
 		strlcpy(test_data.ini_data[test_data.ini_keyword_num].section_name, tmsection_name, MAX_KEYWORD_NAME_LEN);
 		test_data.ini_data[test_data.ini_keyword_num].section_name_len = strlen(tmsection_name);
 
@@ -438,7 +437,7 @@ int fts_test_get_ini_size(char *config_name)
 	return fsize;
 }
 
-
+//Read configuration to memory
 int fts_test_read_ini_data(char *config_name, char *config_buf)
 {
 	struct file *pfile = NULL;
@@ -601,7 +600,7 @@ int fts_test_get_testparam_from_ini(char *config_name)
 		return -EIO;
 	}
 
-	ini_file_data = fts_malloc(inisize + 1);
+	ini_file_data = fts_malloc(inisize + 1); // 1: end mark
 	if (NULL == ini_file_data) {
 		FTS_TEST_ERROR("fts_malloc failed in function:%s",  __func__);
 		return -ENOMEM;

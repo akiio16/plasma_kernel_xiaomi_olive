@@ -3,7 +3,7 @@
  * FocalTech TouchScreen driver.
  *
  * Copyright (c) 2012-2018, Focaltech Ltd. All rights reserved.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -1068,9 +1068,9 @@ char ftp_lockdown_info[40] = {0};
 #define FTS_PROC_LOCKDOWN_FILE "tp_lockdown_info"
 static struct proc_dir_entry *fts_lockdown_status_proc;
 
-#define FTS_PROJECT_ADDR_H          0xd7
-#define FTS_PROJECT_ADDR_L           0xa0
-#define FTS_PROJECT_DATA_LEN       8
+#define FTS_PROJECT_ADDR_H          0xd7//xiaomi Lockdowninfo address-H
+#define FTS_PROJECT_ADDR_L           0xa0//xiaomi Lockdowninfo address-H
+#define FTS_PROJECT_DATA_LEN       8////xiaomi Lockdowninfo data length
 
 static int fts_lockdown_proc_show(struct seq_file *file, void *data)
 {
@@ -1105,7 +1105,7 @@ int fts_create_lockdown_proc(struct i2c_client *client)
 	for (i = 0; i < FTS_UPGRADE_LOOP; i++) {
 		msleep(100);
 
-
+		//*********Step 1:Reset  CTPM *****
 		ret = fts_fwupg_reset_to_boot(client);
 		if (ret < 0) {
 			FTS_ERROR("enter into romboot/bootloader fail");
@@ -1114,7 +1114,7 @@ int fts_create_lockdown_proc(struct i2c_client *client)
 
 		fts_i2c_hid2std(client);
 
-
+		//*********Step 2:Enter upgrade mode *****
 		cmd[0] = FTS_UPGRADE_55;
 		cmd[1] = FTS_UPGRADE_AA;
 		ret = fts_i2c_write(client, cmd, 2);
@@ -1123,7 +1123,7 @@ int fts_create_lockdown_proc(struct i2c_client *client)
 			return ret;
 		}
 
-
+		//*********Step 3:check READ-ID***********************
 		cmd[0] = FTS_CMD_READ_ID;
 		cmd[1] = cmd[2] = cmd[3] = 0x00;
 		ret = fts_i2c_read(client, cmd, 4, val, 2);
@@ -1147,7 +1147,7 @@ int fts_create_lockdown_proc(struct i2c_client *client)
 
 	FTS_INFO("%s,read boot id ok is i = %d \n", __func__, i);
 
-
+	//********* Step 4: read project code from app param area ***********************
 	msleep(10);
 	cmd[0] = FTS_CMD_READ;
 	cmd[1] = 0x00;

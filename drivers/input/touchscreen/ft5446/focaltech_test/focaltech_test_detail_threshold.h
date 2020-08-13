@@ -1,6 +1,5 @@
 /************************************************************************
 * Copyright (C) 2012-2018, Focaltech Systems (R)£¬All Rights Reserved.
-* Copyright (C) 2019 XiaoMi, Inc.
 *
 * File Name: focaltech_test_detail_threshold.h
 *
@@ -20,7 +19,7 @@
 #define NUM_MAX         ((TX_NUM_MAX)*(RX_NUM_MAX))
 #define MAX_PATH            256
 #define BUFFER_LENGTH       512
-#define MAX_TEST_ITEM       20
+#define MAX_TEST_ITEM       20//100
 #define MAX_GRAPH_ITEM       20
 #define MAX_CHANNEL_NUM 144
 
@@ -36,8 +35,8 @@ struct detailthreshold_incell {
 	int *cb_test_max;
 };
 struct detailthreshold_mcap {
-	unsigned char (*invalid_node)[RX_NUM_MAX];
-	unsigned char (*invalid_node_sc)[RX_NUM_MAX];
+	unsigned char (*invalid_node)[RX_NUM_MAX];// Invalid node, the node is not tested
+	unsigned char (*invalid_node_sc)[RX_NUM_MAX];//Invalid node, the SCAP node is not tested
 	int (*rawdata_test_min)[RX_NUM_MAX];
 	int (*rawdata_test_max)[RX_NUM_MAX];
 	int (*rawdata_test_low_min)[RX_NUM_MAX];
@@ -48,7 +47,7 @@ struct detailthreshold_mcap {
 	int (*tx_linearity_test_max)[RX_NUM_MAX];
 	int (*panel_differ_test_max)[RX_NUM_MAX];
 	int (*panel_differ_test_min)[RX_NUM_MAX];
-	int (*scap_rawdata_on_max)[RX_NUM_MAX];
+	int (*scap_rawdata_on_max)[RX_NUM_MAX];//Starting from this is the Self Capacitance test item, the Mutual Capacitance of each test item must be put on the top.
 	int (*scap_rawdata_on_min)[RX_NUM_MAX];
 	int (*scap_rawdata_off_max)[RX_NUM_MAX];
 	int (*scap_rawdata_off_min)[RX_NUM_MAX];
@@ -60,7 +59,7 @@ struct detailthreshold_mcap {
 	int (*PanelDiffer_Uniformity_TxLinearityTest_Max)[RX_NUM_MAX];
 	int (*PanelDiffer_Uniformity_RxLinearityTest_Max)[RX_NUM_MAX];
 
-	int ForceTouch_SCapRawDataTest_ON_Max[FORCETOUCH_ROW][RX_NUM_MAX];
+	int ForceTouch_SCapRawDataTest_ON_Max[FORCETOUCH_ROW][RX_NUM_MAX];//Starting from this is the force touch test item the Self Capacitance of each test item must be put on the top.
 	int ForceTouch_SCapRawDataTest_ON_Min[FORCETOUCH_ROW][RX_NUM_MAX];
 	int ForceTouch_SCapRawDataTest_OFF_Max[FORCETOUCH_ROW][RX_NUM_MAX];
 	int ForceTouch_SCapRawDataTest_OFF_Min[FORCETOUCH_ROW][RX_NUM_MAX];
@@ -82,8 +81,8 @@ struct detailthreshold_scap {
 	int CiDeviationTest_Base[MAX_CHANNEL_NUM];
 
 	int NoiseTest_Max[MAX_CHANNEL_NUM];
-	int DeltaCxTest_Sort[MAX_CHANNEL_NUM];
-	int DeltaCxTest_Area[MAX_CHANNEL_NUM];
+	int DeltaCxTest_Sort[MAX_CHANNEL_NUM];         //Sort for 6x06 and 6x36 employed universally
+	int DeltaCxTest_Area[MAX_CHANNEL_NUM];         //Area for 6x06 and 6x36 employed universally
 
 	int cb_test_max[MAX_CHANNEL_NUM];
 	int cb_test_min[MAX_CHANNEL_NUM];

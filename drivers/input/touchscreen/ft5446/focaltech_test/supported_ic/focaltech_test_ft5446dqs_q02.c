@@ -1,6 +1,5 @@
 /************************************************************************
 * Copyright (C) 2012-2018, Focaltech Systems (R)£¬All Rights Reserved.
-* Copyright (C) 2019 XiaoMi, Inc.
 *
 * File Name: Focaltech_test_ft5x46.c
 *
@@ -20,7 +19,7 @@
 /*****************************************************************************
 * Private constant and macro definitions using #define
 *****************************************************************************/
-
+/////////////////////////////////////////////////Reg
 #define DEVIDE_MODE_ADDR    0x00
 #define REG_LINE_NUM    0x01
 #define REG_TX_NUM  0x02
@@ -141,9 +140,9 @@ struct stCfg_FT5X46_BasicThreshold {
 	int Lcd_Noise_SetFrequency;
 };
 enum enumTestItem_FT5X46 {
-	Code_FT5X46_ENTER_FACTORY_MODE,
-	Code_FT5X46_DOWNLOAD,
-	Code_FT5X46_UPGRADE,
+	Code_FT5X46_ENTER_FACTORY_MODE,//All IC are required to test items
+	Code_FT5X46_DOWNLOAD,//All IC are required to test items
+	Code_FT5X46_UPGRADE,//All IC are required to test items
 	Code_FT5X46_FACTORY_ID_TEST,
 	Code_FT5X46_PROJECT_CODE_TEST,
 	Code_FT5X46_FW_VERSION_TEST,
@@ -160,7 +159,7 @@ enum enumTestItem_FT5X46 {
 	Code_FT5X46_UNIFORMITY_TEST,
 	Code_FT5X46_CM_TEST,
 	Code_FT5X46_RAWDATA_MARGIN_TEST,
-	Code_FT5X46_WRITE_CONFIG,
+	Code_FT5X46_WRITE_CONFIG,//All IC are required to test items
 	Code_FT5X46_PANELDIFFER_TEST,
 	Code_FT5X46_PANELDIFFER_UNIFORMITY_TEST,
 	Code_FT5X46_LCM_ID_TEST,
@@ -193,7 +192,7 @@ struct stCfg_FT5X46_BasicThreshold g_stCfg_FT5X46_BasicThreshold;
 /*****************************************************************************
 * Static function prototypes
 *****************************************************************************/
-
+//////////////////////////////////////////////Communication function
 static int StartScan(void);
 static unsigned char ReadRawData(unsigned char Freq, unsigned char LineNum, int ByteNum, int *pRevBuffer);
 static unsigned char GetPanelRows(unsigned char *pPanelRows);
@@ -232,14 +231,14 @@ bool start_test_ft5x46(void)
 
 	FTS_TEST_FUNC_ENTER();
 
-
+	//--------------2. test item
 	if (0 == test_data.test_num)
 		bTestResult = false;
 
 	for (iItemCount = 0; iItemCount < test_data.test_num; iItemCount++) {
 		test_data.test_item_code = test_data.test_item[iItemCount].itemcode;
 
-
+		///////////////////////////////////////////////////////FT5X46_ENTER_FACTORY_MODE
 		if (Code_FT5X46_ENTER_FACTORY_MODE == test_data.test_item[iItemCount].itemcode
 		  ) {
 
@@ -247,12 +246,12 @@ bool start_test_ft5x46(void)
 			if (ERROR_CODE_OK != ReCode || (!bTempResult)) {
 				bTestResult = false;
 				test_data.test_item[iItemCount].testresult = RESULT_NG;
-				break;
+				break;//if this item FAIL, no longer test.
 			} else
 				test_data.test_item[iItemCount].testresult = RESULT_PASS;
 		}
 
-
+		///////////////////////////////////////////////////////FT5X46_RAWDATA_TEST
 		if (Code_FT5X46_RAWDATA_TEST == test_data.test_item[iItemCount].itemcode
 		  ) {
 
@@ -265,7 +264,7 @@ bool start_test_ft5x46(void)
 		}
 
 
-
+		///////////////////////////////////////////////////////FT5X46_SCAP_CB_TEST
 		if (Code_FT5X46_SCAP_CB_TEST == test_data.test_item[iItemCount].itemcode
 		  ) {
 			ReCode = FT5X46_TestItem_SCapCbTest(&bTempResult);
@@ -276,7 +275,7 @@ bool start_test_ft5x46(void)
 				test_data.test_item[iItemCount].testresult = RESULT_PASS;
 		}
 
-
+		///////////////////////////////////////////////////////FT5X46_SCAP_RAWDATA_TEST
 		if (Code_FT5X46_SCAP_RAWDATA_TEST == test_data.test_item[iItemCount].itemcode
 		  ) {
 			ReCode = FT5X46_TestItem_SCapRawDataTest(&bTempResult);
@@ -287,7 +286,7 @@ bool start_test_ft5x46(void)
 				test_data.test_item[iItemCount].testresult = RESULT_PASS;
 		}
 
-
+		/////////////////////////////////////////////////////// Code_FT5X46_PANELDIFFER_TEST,
 		if (Code_FT5X46_PANELDIFFER_TEST == test_data.test_item[iItemCount].itemcode
 		  ) {
 
@@ -299,7 +298,7 @@ bool start_test_ft5x46(void)
 				test_data.test_item[iItemCount].testresult = RESULT_PASS;
 		}
 
-
+		/////////////////////////////////////////////////////// Code_FT5X46_PANELDIFFER_UNIFORMITY_TEST,
 		if (Code_FT5X46_PANELDIFFER_UNIFORMITY_TEST == test_data.test_item[iItemCount].itemcode
 		  ) {
 
@@ -311,7 +310,7 @@ bool start_test_ft5x46(void)
 				test_data.test_item[iItemCount].testresult = RESULT_PASS;
 		}
 
-
+		///////////////////////////////////////////////////////Code_FT5X46_WEAK_SHORT_CIRCUIT_TEST
 		if (Code_FT5X46_WEAK_SHORT_CIRCUIT_TEST == test_data.test_item[iItemCount].itemcode
 		  ) {
 
@@ -326,7 +325,7 @@ bool start_test_ft5x46(void)
 
 	}
 
-
+	//--------------4. return result
 	return bTestResult;
 }
 
@@ -338,9 +337,9 @@ bool start_selftest_ft5x46(int temp)
 
 	FTS_TEST_FUNC_ENTER();
 
-
+	//--------------2. teset part
 	if (temp) {
-
+		///////////////////////////////////////////////////////FT5X46_ENTER_FACTORY_MODE
 			ReCode = FT5X46_TestItem_EnterFactoryMode();
 			if (ERROR_CODE_OK != ReCode || (!bTempResult)) {
 				bTestResult = false;
@@ -349,7 +348,7 @@ bool start_selftest_ft5x46(int temp)
 
 		switch (temp) {
 		case TP_SELFTEST_SHORT:
-
+			///////////////////////////////////////////////////////Code_FT5X46_WEAK_SHORT_CIRCUIT_TEST
 			ReCode = FT5X46_TestItem_WeakShortTest(&bTempResult);
 			if (ERROR_CODE_OK != ReCode || (!bTempResult)) {
 				bTestResult = false;
@@ -357,14 +356,14 @@ bool start_selftest_ft5x46(int temp)
 			}
 			break;
 		case TP_SELFTEST_OPEN:
-
+			/////////////////////////////////////////////////////// Code_FT5X46_PANELDIFFER_TEST,
 			ReCode = FT5X46_TestItem_PanelDifferTest(&bTempResult);
 			if (ERROR_CODE_OK != ReCode || (!bTempResult)) {
 				bTestResult = false;
 				FTS_TEST_ERROR("PanelDifferTest error.\n");
 				break;
 			}
-
+			/////////////////////////////////////////////////////// Code_FT5X46_PANELDIFFER_UNIFORMITY_TEST,
 			ReCode = FT5X46_TestItem_PanelDiffer_Uniformity_Test(&bTempResult);
 			if (ERROR_CODE_OK != ReCode || (!bTempResult)) {
 				bTestResult = false;
@@ -374,7 +373,7 @@ bool start_selftest_ft5x46(int temp)
 		}
 	}
 
-
+	//--------------4. return result
 	return bTestResult;
 }
 
@@ -388,7 +387,7 @@ bool start_selftest_ft5x46(int temp)
 unsigned char FT5X46_TestItem_EnterFactoryMode(void)
 {
 	unsigned char ReCode = ERROR_CODE_INVALID_PARAM;
-	int iRedo = 5;
+	int iRedo = 5; //If failed, repeat 5 times.
 	int i ;
 	unsigned char chPattern = 0;
 
@@ -415,10 +414,10 @@ unsigned char FT5X46_TestItem_EnterFactoryMode(void)
 		return ReCode;
 	}
 
-
+	//After the success of the factory model, read the number of channels
 	ReCode = GetChannelNum();
 
-
+	// to determine whether the V3 screen body
 	ReCode = read_reg(REG_PATTERN, &chPattern);
 	if (chPattern == 1) {
 		m_bV3TP = true;
@@ -458,9 +457,9 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 		goto TEST_ERR;
 	}
 
-
-
-
+	//Determine whether for v3 TP first, and then read the value of the 0x54
+	//and check the mapping type is right or not,if not, write the register
+	//rawdata test mapping before mapping 0x54=1;after mapping 0x54=0;
 	if (m_bV3TP) {
 		ReCode = read_reg(REG_MAPPING_SWITCH, &strSwitch);
 		if (ReCode != ERROR_CODE_OK) {
@@ -483,8 +482,8 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 		}
 	}
 
-
-	ReCode = read_reg(REG_NORMALIZE_TYPE, &OriginValue);
+	//Line by line one after the rawdata value, the default 0X16=0
+	ReCode = read_reg(REG_NORMALIZE_TYPE, &OriginValue);// read the original value
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\n\n Read  REG_NORMALIZE_TYPE error. Error Code: %d",  ReCode);
 		goto TEST_ERR;
@@ -501,14 +500,14 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 	}
 
 	if (test_data.screen_param.normalize == AUTO_NORMALIZE) {
-		if (OriginValue != 1) {
+		if (OriginValue != 1) { //if original value is not the value needed,write the register to change
 			ReCode = write_reg(REG_NORMALIZE_TYPE, 0x01);
 			if (ReCode != ERROR_CODE_OK) {
 				FTS_TEST_SAVE_INFO("\n\n write  REG_NORMALIZE_TYPE error. Error Code: %d",  ReCode);
 				goto TEST_ERR;
 			}
 		}
-
+		//Set Frequecy High
 
 		FTS_TEST_SAVE_INFO("\n=========Set Frequecy High\n");
 		ReCode = write_reg(0x0A, 0x81);
@@ -518,13 +517,13 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 		}
 
 		FTS_TEST_SAVE_INFO("\n=========FIR State: ON \n");
-		ReCode = write_reg(0xFB, 1);
+		ReCode = write_reg(0xFB, 1);//FIR OFF  0:close, 1:open
 		if (ReCode != ERROR_CODE_OK) {
 			FTS_TEST_SAVE_INFO("\n\n FIR State: ON error. Error Code: %d",  ReCode);
 			goto TEST_ERR;
 		}
 
-
+		//change register value before,need to lose 3 frame data
 		for (index = 0; index < 3; ++index) {
 			ReCode = GetRawData();
 		}
@@ -536,11 +535,11 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 
 		ShowRawData();
 
-
+		////////////////////////////////To Determine RawData if in Range or not
 		for (iRow = 0; iRow < test_data.screen_param.tx_num; iRow++) {
 			for (iCol = 0; iCol < test_data.screen_param.rx_num; iCol++) {
 				if (test_data.mcap_detail_thr.invalid_node[iRow][iCol] == 0)
-					continue;
+					continue; //Invalid Node
 				RawDataMin = test_data.mcap_detail_thr.rawdata_test_high_min[iRow][iCol];
 				RawDataMax = test_data.mcap_detail_thr.rawdata_test_high_max[iRow][iCol];
 				iValue = m_RawData[iRow][iCol];
@@ -552,10 +551,10 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 			}
 		}
 
-
+		//////////////////////////////Save Test Data
 		Save_Test_Data(m_RawData, "RawData Test", 0, test_data.screen_param.tx_num, test_data.screen_param.rx_num, 2);
 	} else {
-		if (OriginValue != 0) {
+		if (OriginValue != 0) { //if original value is not the value needed,write the register to change
 			ReCode = write_reg(REG_NORMALIZE_TYPE, 0x00);
 			if (ReCode != ERROR_CODE_OK) {
 				FTS_TEST_SAVE_INFO("\n\n write REG_NORMALIZE_TYPE error. Error Code: %d",  ReCode);
@@ -563,7 +562,7 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 			}
 		}
 
-
+		//Set Frequecy Low
 		if (g_stCfg_FT5X46_BasicThreshold.RawDataTest_SetLowFreq) {
 			FTS_TEST_SAVE_INFO("\n\n=========Set Frequecy Low");
 			ReCode = write_reg(0x0A, 0x80);
@@ -572,7 +571,7 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 				goto TEST_ERR;
 			}
 
-
+			//FIR OFF  0:close, 1:open
 
 			FTS_TEST_SAVE_INFO("\n\n=========FIR State: OFF\n");
 			ReCode = write_reg(0xFB, 0);
@@ -595,12 +594,12 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 			}
 			ShowRawData();
 
-
+			////////////////////////////////To Determine RawData if in Range or not
 			for (iRow = 0; iRow < test_data.screen_param.tx_num; iRow++) {
 
 				for (iCol = 0; iCol < test_data.screen_param.rx_num; iCol++) {
 					if (test_data.mcap_detail_thr.invalid_node[iRow][iCol] == 0)
-						continue;
+						continue; //Invalid Node
 					RawDataMin = test_data.mcap_detail_thr.rawdata_test_low_min[iRow][iCol];
 					RawDataMax = test_data.mcap_detail_thr.rawdata_test_low_max[iRow][iCol];
 					iValue = m_RawData[iRow][iCol];
@@ -612,12 +611,12 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 				}
 			}
 
-
+			//////////////////////////////Save Test Data
 			Save_Test_Data(m_RawData, "RawData Test", 0, test_data.screen_param.tx_num, test_data.screen_param.rx_num, 1);
 		}
 
 
-
+		//Set Frequecy High
 		if (g_stCfg_FT5X46_BasicThreshold.RawDataTest_SetHighFreq) {
 
 			FTS_TEST_SAVE_INFO("\n=========Set Frequecy High");
@@ -627,7 +626,7 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 				goto TEST_ERR;
 			}
 
-
+			//FIR OFF  0:close, 1:open
 
 			FTS_TEST_SAVE_INFO("\n\n=========FIR State: OFF\n");
 			ReCode = write_reg(0xFB, 0);
@@ -636,7 +635,7 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 				goto TEST_ERR;
 			}
 			sys_delay(100);
-
+			//change register value before,need to lose 3 frame data
 			for (index = 0; index < 3; ++index) {
 				ReCode = GetRawData();
 			}
@@ -648,12 +647,12 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 			}
 			ShowRawData();
 
-
+			////////////////////////////////To Determine RawData if in Range or not
 			for (iRow = 0; iRow < test_data.screen_param.tx_num; iRow++) {
 
 				for (iCol = 0; iCol < test_data.screen_param.rx_num; iCol++) {
 					if (test_data.mcap_detail_thr.invalid_node[iRow][iCol] == 0)
-						continue;
+						continue; //Invalid Node
 					RawDataMin = test_data.mcap_detail_thr.rawdata_test_high_min[iRow][iCol];
 					RawDataMax = test_data.mcap_detail_thr.rawdata_test_high_max[iRow][iCol];
 					iValue = m_RawData[iRow][iCol];
@@ -665,29 +664,29 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 				}
 			}
 
-
+			//////////////////////////////Save Test Data
 			Save_Test_Data(m_RawData, "RawData Test", 0, test_data.screen_param.tx_num, test_data.screen_param.rx_num, 2);
 		}
 
 	}
 
-	ReCode = write_reg(REG_NORMALIZE_TYPE, OriginValue);
+	ReCode = write_reg(REG_NORMALIZE_TYPE, OriginValue);//set the origin value
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\n\n Write REG_NORMALIZE_TYPE error. Error Code: %d",  ReCode);
 		goto TEST_ERR;
 	}
-	ReCode = write_reg(0x0A, ucFre);
+	ReCode = write_reg(0x0A, ucFre);//set the origin value
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\n\n Write 0x0A error. Error Code: %d",  ReCode);
 		goto TEST_ERR;
 	}
-	ReCode = write_reg(0xFB, ucFir);
+	ReCode = write_reg(0xFB, ucFir);//set the origin value
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\n\n Write 0xFB error. Error Code: %d",  ReCode);
 		goto TEST_ERR;
 	}
 
-
+	//set V3 TP the origin mapping value
 	if (m_bV3TP) {
 		ReCode = write_reg(REG_MAPPING_SWITCH, strSwitch);
 		if (ReCode != ERROR_CODE_OK) {
@@ -696,7 +695,7 @@ unsigned char FT5X46_TestItem_RawDataTest(bool *bTestResult)
 		}
 	}
 
-
+	//-------------------------Result
 	if (btmpresult) {
 		*bTestResult = true;
 		FTS_TEST_SAVE_INFO("\n\n\n/==========RawData Test is OK!");
@@ -733,34 +732,34 @@ unsigned char FT5X46_TestItem_SCapRawDataTest(bool *bTestResult)
 	int iMin = 0;
 	int iAvg = 0;
 	int ByteNum = 0;
-	unsigned char wc_value = 0;
+	unsigned char wc_value = 0;//waterproof channel value
 	unsigned char ucValue = 0;
 	int iCount = 0;
 
 	FTS_TEST_SAVE_INFO("\n\n\n==============================Test Item: -------- Scap RawData Test \n");
-
-
+	//-------1.Preparatory work
+	//in Factory Mode
 	ReCode = enter_factory_mode();
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\n\n\n// Failed to Enter factory Mode. Error Code: %d", ReCode);
 		goto TEST_ERR;
 	}
 
-
+	//get waterproof channel setting, to check if Tx/Rx channel need to test
 	ReCode = read_reg(REG_WATER_CHANNEL_SELECT, &wc_value);
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\n\n\n// Failed to read REG_WATER_CHANNEL_SELECT. Error Code: %d", ReCode);
 		goto TEST_ERR;
 	}
 
-
+	//If it is V3 pattern, Get Tx/Rx Num again
 	ReCode = SwitchToNoMapping();
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\n\n\n// Failed to SwitchToNoMapping. Error Code: %d", ReCode);
 		goto TEST_ERR;
 	}
 
-
+	//-------2.Get SCap Raw Data, Step:1.Start Scanning; 2. Read Raw Data
 	ReCode = StartScan();
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\nFailed to Scan SCap RawData! ");
@@ -769,7 +768,7 @@ unsigned char FT5X46_TestItem_SCapRawDataTest(bool *bTestResult)
 	for (i = 0; i < 3; i++) {
 		memset(m_iTempRawData, 0, sizeof(m_iTempRawData));
 
-
+		//water rawdata
 		ByteNum = (test_data.screen_param.tx_num + test_data.screen_param.rx_num) * 2;
 		ReCode = ReadRawData(0, 0xAC, ByteNum, m_iTempRawData);
 		if (ReCode != ERROR_CODE_OK) {
@@ -780,7 +779,7 @@ unsigned char FT5X46_TestItem_SCapRawDataTest(bool *bTestResult)
 		memcpy(m_RawData[0 + test_data.screen_param.tx_num], m_iTempRawData, sizeof(int)*test_data.screen_param.rx_num);
 		memcpy(m_RawData[1 + test_data.screen_param.tx_num], m_iTempRawData + test_data.screen_param.rx_num, sizeof(int)*test_data.screen_param.tx_num);
 
-
+		//No water rawdata
 		ByteNum = (test_data.screen_param.tx_num + test_data.screen_param.rx_num) * 2;
 		ReCode = ReadRawData(0, 0xAB, ByteNum, m_iTempRawData);
 		if (ReCode != ERROR_CODE_OK) {
@@ -792,13 +791,13 @@ unsigned char FT5X46_TestItem_SCapRawDataTest(bool *bTestResult)
 	}
 
 
+	//-----3. Judge
 
-
-
+	//Waterproof ON
 	bFlag = GetTestCondition(WT_NeedProofOnTest, wc_value);
 	if (g_stCfg_FT5X46_BasicThreshold.SCapRawDataTest_SetWaterproof_ON && bFlag) {
 
-
+		// Show Scap rawdata in WaterProof On Mode
 		FTS_TEST_SAVE_INFO("\n////////////SCapRawdataTest in WaterProof On Mode:  \n");
 		FTS_TEST_SAVE_INFO("\nSCap Rawdata_Rx:  ");
 		for (i = 0; i < test_data.screen_param.rx_num; i++) {
@@ -825,9 +824,9 @@ unsigned char FT5X46_TestItem_SCapRawDataTest(bool *bTestResult)
 			Value = m_RawData[0 + test_data.screen_param.tx_num][i];
 			iAvg += Value;
 			if (iMax < Value)
-				iMax = Value;
+				iMax = Value; //find the Max value
 			if (iMin > Value)
-				iMin = Value;
+				iMin = Value; //fine the min value
 			if (Value > RawDataMax || Value < RawDataMin) {
 				btmpresult = false;
 				FTS_TEST_SAVE_INFO("\n\n Failed. Num = %d, Value = %d, range = (%d, %d) \n",  i + 1, Value, RawDataMin, RawDataMax);
@@ -843,9 +842,9 @@ unsigned char FT5X46_TestItem_SCapRawDataTest(bool *bTestResult)
 			Value = m_RawData[1 + test_data.screen_param.tx_num][i];
 			iAvg += Value;
 			if (iMax < Value)
-				iMax = Value;
+				iMax = Value; //find the Max value
 			if (iMin > Value)
-				iMin = Value;
+				iMin = Value; //fine the min value
 			if (Value > RawDataMax || Value < RawDataMin) {
 				btmpresult = false;
 				FTS_TEST_SAVE_INFO("\n\nFailed. Num = %d, Value = %d, range = (%d, %d) \n",  i + 1, Value, RawDataMin, RawDataMax);
@@ -861,10 +860,10 @@ unsigned char FT5X46_TestItem_SCapRawDataTest(bool *bTestResult)
 		Save_Test_Data(m_RawData, "SCap RawData Test", test_data.screen_param.tx_num + 0, 2, test_data.screen_param.rx_num, 1);
 	}
 
-
+	//Waterproof OFF
 	bFlag = GetTestCondition(WT_NeedProofOffTest, wc_value);
 	if (g_stCfg_FT5X46_BasicThreshold.SCapRawDataTest_SetWaterproof_OFF && bFlag) {
-
+		// Show Scap rawdata in WaterProof Off Mode
 		FTS_TEST_SAVE_INFO("\n\n ////////////SCapRawdataTest in WaterProof Off Mode:  \n");
 		FTS_TEST_SAVE_INFO("\nSCap Rawdata_Rx:  ");
 		for (i = 0; i < test_data.screen_param.rx_num; i++) {
@@ -891,8 +890,8 @@ unsigned char FT5X46_TestItem_SCapRawDataTest(bool *bTestResult)
 			Value = m_RawData[2 + test_data.screen_param.tx_num][i];
 			iAvg += Value;
 
-
-
+			//FTS_TEST_SAVE_INFO("\nzaxzax3 Value %d RawDataMin %d  RawDataMax %d  ",  Value, RawDataMin, RawDataMax);
+			//strTemp += str;
 			if (iMax < Value)
 				iMax = Value;
 			if (iMin > Value)
@@ -911,7 +910,7 @@ unsigned char FT5X46_TestItem_SCapRawDataTest(bool *bTestResult)
 			Value = m_RawData[3 + test_data.screen_param.tx_num][i];
 			RawDataMin = test_data.mcap_detail_thr.scap_rawdata_off_min[1][i];
 			RawDataMax = test_data.mcap_detail_thr.scap_rawdata_off_max[1][i];
-
+			//FTS_TEST_SAVE_INFO("\nzaxzax4 Value %d RawDataMin %d  RawDataMax %d  ",  Value, RawDataMin, RawDataMax);
 			iAvg += Value;
 			if (iMax < Value)
 				iMax = Value;
@@ -931,7 +930,7 @@ unsigned char FT5X46_TestItem_SCapRawDataTest(bool *bTestResult)
 			iAvg = iAvg / iCount;
 		Save_Test_Data(m_RawData, "SCap RawData Test", test_data.screen_param.tx_num + 2, 2, test_data.screen_param.rx_num, 2);
 	}
-
+	//-----4. post-stage work
 	if (m_bV3TP) {
 		ReCode = read_reg(REG_MAPPING_SWITCH, &ucValue);
 		if (ReCode != ERROR_CODE_OK) {
@@ -948,7 +947,7 @@ unsigned char FT5X46_TestItem_SCapRawDataTest(bool *bTestResult)
 			}
 		}
 
-
+		//Only self content will be used before the Mapping, so the end of the test items, need to go after Mapping
 		ReCode = GetChannelNum();
 		if (ReCode != ERROR_CODE_OK) {
 			FTS_TEST_SAVE_INFO("\n\n GetChannelNum error. Error Code: %d",  ReCode);
@@ -956,7 +955,7 @@ unsigned char FT5X46_TestItem_SCapRawDataTest(bool *bTestResult)
 		}
 	}
 
-
+	//-----5. Test Result
 	if (btmpresult) {
 		*bTestResult = true;
 		FTS_TEST_SAVE_INFO("\n\n\n/==========SCap RawData Test is OK!");
@@ -990,18 +989,18 @@ unsigned char FT5X46_TestItem_SCapCbTest(bool *bTestResult)
 	unsigned char sc_wrok_mode = 0;
 	unsigned char ucValue = 0;
 	int iCount = 0;
-
+	//   int ibiggerValue = 0;
 
 	FTS_TEST_SAVE_INFO("\n\n\n==============================Test Item: -----  Scap CB Test \n");
-
-
+	//-------1.Preparatory work
+	//in Factory Mode
 	ReCode = enter_factory_mode();
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\n\n\n// Failed to Enter factory Mode. Error Code: %d", ReCode);
 		goto TEST_ERR;
 	}
 
-
+	//get waterproof channel setting, to check if Tx/Rx channel need to test
 	ReCode = read_reg(REG_WATER_CHANNEL_SELECT, &wc_value);
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\n\n Read REG_WATER_CHANNEL_SELECT error. Error Code: %d",  ReCode);
@@ -1014,14 +1013,14 @@ unsigned char FT5X46_TestItem_SCapCbTest(bool *bTestResult)
 	}
 
 
-
+	//If it is V3 pattern, Get Tx/Rx Num again
 	bFlag = SwitchToNoMapping();
 	if (bFlag) {
 		FTS_TEST_SAVE_INFO("\nFailed to SwitchToNoMapping! ReCode = %d. ",  ReCode);
 		goto TEST_ERR;
 	}
 
-
+	//-------2.Get SCap Raw Data, Step:1.Start Scanning; 2. Read Raw Data
 	ReCode = StartScan();
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\nFailed to Scan SCap RawData!ReCode = %d. ",  ReCode);
@@ -1033,8 +1032,8 @@ unsigned char FT5X46_TestItem_SCapCbTest(bool *bTestResult)
 		memset(m_RawData, 0, sizeof(m_RawData));
 		memset(m_ucTempData, 0, sizeof(m_ucTempData));
 
-
-		ReCode = write_reg(REG_ScWorkMode, 1);
+		//waterproof CB
+		ReCode = write_reg(REG_ScWorkMode, 1);//ScWorkMode:  1:waterproof 0:Non-waterproof
 		if (ReCode != ERROR_CODE_OK) {
 			FTS_TEST_SAVE_INFO("\nGet REG_ScWorkMode Failed!");
 			goto TEST_ERR;
@@ -1065,8 +1064,8 @@ unsigned char FT5X46_TestItem_SCapCbTest(bool *bTestResult)
 			m_RawData[1 + test_data.screen_param.tx_num][index] = m_ucTempData[index + test_data.screen_param.rx_num];
 		}
 
-
-		ReCode = write_reg(REG_ScWorkMode, 0);
+		//Non-waterproof rawdata
+		ReCode = write_reg(REG_ScWorkMode, 0);//ScWorkMode:  1:waterproof 0:Non-waterproof
 		if (ReCode != ERROR_CODE_OK) {
 			FTS_TEST_SAVE_INFO("\nGet REG_ScWorkMode Failed!");
 			goto TEST_ERR;
@@ -1104,12 +1103,12 @@ unsigned char FT5X46_TestItem_SCapCbTest(bool *bTestResult)
 	if (ReCode != ERROR_CODE_OK)
 		goto TEST_ERR;
 
+	//-----3. Judge
 
-
-
+	//Waterproof ON
 	bFlag = GetTestCondition(WT_NeedProofOnTest, wc_value);
 	if (g_stCfg_FT5X46_BasicThreshold.SCapCbTest_SetWaterproof_ON && bFlag) {
-
+		// Show Scap CB in WaterProof On Mode
 		FTS_TEST_SAVE_INFO("\n////////////SCapCbTest in WaterProof On Mode:  \n");
 		FTS_TEST_SAVE_INFO("\nSCap CB_Rx:  ");
 		for (i = 0; i < test_data.screen_param.rx_num; i++) {
@@ -1135,9 +1134,9 @@ unsigned char FT5X46_TestItem_SCapCbTest(bool *bTestResult)
 			iAvg += Value;
 
 			if (iMax < Value)
-				iMax = Value;
+				iMax = Value; //find the Max Value
 			if (iMin > Value)
-				iMin = Value;
+				iMin = Value; //find the Min Value
 			if (Value > CBMax || Value < CBMin) {
 				btmpresult = false;
 				FTS_TEST_SAVE_INFO("\n \n Failed. Num = %d, Value = %d, range = (%d, %d) \n",  i + 1, Value, CBMin, CBMax);
@@ -1174,7 +1173,7 @@ unsigned char FT5X46_TestItem_SCapCbTest(bool *bTestResult)
 
 	bFlag = GetTestCondition(WT_NeedProofOffTest, wc_value);
 	if (g_stCfg_FT5X46_BasicThreshold.SCapCbTest_SetWaterproof_OFF && bFlag) {
-
+		// Show Scap CB in WaterProof Off Mode
 		FTS_TEST_SAVE_INFO("\n\n////////////SCapCbTest in WaterProof Off Mode:  \n");
 		FTS_TEST_SAVE_INFO("\nSCap CB_Rx:  ");
 		for (i = 0; i < test_data.screen_param.rx_num; i++) {
@@ -1211,7 +1210,7 @@ unsigned char FT5X46_TestItem_SCapCbTest(bool *bTestResult)
 		}
 		bFlag = GetTestCondition(WT_NeedTxOffVal, wc_value);
 		for (i = 0; bFlag && i < test_data.screen_param.tx_num; i++) {
-
+			//if(m_ScapInvalide[1][i] == 0)      continue;
 			if (test_data.mcap_detail_thr.invalid_node_sc[1][i] == 0)
 				continue;
 			CBMin = test_data.mcap_detail_thr.scap_cb_test_off_min[1][i];
@@ -1238,7 +1237,7 @@ unsigned char FT5X46_TestItem_SCapCbTest(bool *bTestResult)
 			iAvg = iAvg / iCount;
 		Save_Test_Data(m_RawData, "SCap CB Test", test_data.screen_param.tx_num + 2, 2, test_data.screen_param.rx_num, 2);
 	}
-
+	//-----4. post-stage work
 	if (m_bV3TP) {
 		ReCode = read_reg(REG_MAPPING_SWITCH, &ucValue);
 		if (ReCode != ERROR_CODE_OK) {
@@ -1255,7 +1254,7 @@ unsigned char FT5X46_TestItem_SCapCbTest(bool *bTestResult)
 			}
 		}
 
-
+		//Only self content will be used before the Mapping, so the end of the test items, need to go after Mapping
 		ReCode = GetChannelNum();
 		if (ReCode != ERROR_CODE_OK) {
 			FTS_TEST_SAVE_INFO("\n\n GetChannelNum error. Error Code: %d",  ReCode);
@@ -1263,14 +1262,14 @@ unsigned char FT5X46_TestItem_SCapCbTest(bool *bTestResult)
 		}
 	}
 
-	ReCode = write_reg(REG_ScWorkMode, sc_wrok_mode);
+	ReCode = write_reg(REG_ScWorkMode, sc_wrok_mode);//set the origin value
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\n\n Write REG_ScWorkMode error. Error Code: %d",  ReCode);
 		goto TEST_ERR;
 	}
 
 
-
+	//-----5. Test Result
 
 	if (btmpresult) {
 		*bTestResult = true;
@@ -1302,7 +1301,7 @@ unsigned char FT5X46_TestItem_PanelDifferTest(bool *bTestResult)
 	int iValue = 0;
 	unsigned char ReCode = 0, strSwitch = -1;
 	bool btmpresult = true;
-	int iMax, iMin;
+	int iMax, iMin; //, iAvg;
 	int maxValue = 0;
 	int minValue = 32767;
 	int AvgValue = 0;
@@ -1323,7 +1322,9 @@ unsigned char FT5X46_TestItem_PanelDifferTest(bool *bTestResult)
 		goto TEST_ERR;
 	}
 
-
+	//Determine whether for v3 TP first, and then read the value of the 0x54
+	//and check the mapping type is right or not,if not, write the register
+	//rawdata test mapping¡ê?before mapping¡êo0x54=1;after mapping¡êo0x54=0;
 	if (m_bV3TP) {
 		ReCode = read_reg(REG_MAPPING_SWITCH, &strSwitch);
 		if (ReCode != ERROR_CODE_OK) {
@@ -1337,7 +1338,7 @@ unsigned char FT5X46_TestItem_PanelDifferTest(bool *bTestResult)
 				FTS_TEST_SAVE_INFO("\n\n Write REG_MAPPING_SWITCH error. Error Code: %d",  ReCode);
 				goto TEST_ERR;
 			}
-
+			//  MUST get channel number again after write reg mapping switch.
 			ReCode = GetChannelNum();
 			if (ReCode != ERROR_CODE_OK) {
 				FTS_TEST_SAVE_INFO("\n\n GetChannelNum error. Error Code: %d",  ReCode);
@@ -1348,9 +1349,9 @@ unsigned char FT5X46_TestItem_PanelDifferTest(bool *bTestResult)
 		}
 	}
 
-
+	///////////
 	FTS_TEST_SAVE_INFO("\n\r\n=========Set Auto Equalization:\r\n");
-	ReCode = read_reg(REG_NORMALIZE_TYPE, &OriginRawDataType);
+	ReCode = read_reg(REG_NORMALIZE_TYPE, &OriginRawDataType);//Read the original value
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\nRead  REG_NORMALIZE_TYPE error. Error Code: %d",  ReCode);
 		btmpresult = false;
@@ -1366,11 +1367,11 @@ unsigned char FT5X46_TestItem_PanelDifferTest(bool *bTestResult)
 			goto TEST_ERR;
 		}
 	}
+	///////////
 
-
-
+	//Set Frequecy High
 	FTS_TEST_SAVE_INFO("\n=========Set Frequecy High");
-	ReCode = read_reg(0x0A, &OriginFrequecy);
+	ReCode = read_reg(0x0A, &OriginFrequecy); //Read the original value
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\nRead reg 0x0A error. Error Code: %d",  ReCode);
 		btmpresult = false;
@@ -1386,7 +1387,7 @@ unsigned char FT5X46_TestItem_PanelDifferTest(bool *bTestResult)
 	}
 
 	FTS_TEST_SAVE_INFO("\n=========FIR State: OFF");
-	ReCode = read_reg(0xFB, &OriginFirState);
+	ReCode = read_reg(0xFB, &OriginFirState);//Read the original value
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\nRead reg 0xFB error. Error Code: %d",  ReCode);
 		btmpresult = false;
@@ -1401,6 +1402,7 @@ unsigned char FT5X46_TestItem_PanelDifferTest(bool *bTestResult)
 	}
 	ReCode = GetRawData();
 
+	//change register value before,need to lose 3 frame data¡ê?4th frame data is valid
 	for (index = 0; index < 4; ++index) {
 		ReCode = GetRawData();
 		if (ReCode != ERROR_CODE_OK) {
@@ -1410,14 +1412,14 @@ unsigned char FT5X46_TestItem_PanelDifferTest(bool *bTestResult)
 		}
 	}
 
-
+	////Differ = RawData * 1/10
 	for (i = 0; i < test_data.screen_param.tx_num; i++) {
 		for (j = 0; j < test_data.screen_param.rx_num; j++) {
 			m_DifferData[i][j] = m_RawData[i][j] / 10;
 		}
 	}
 
-
+	////////////////////////////////To show value
 #if 1
 	FTS_TEST_SAVE_INFO("\nPannelDiffer :\n");
 	for (iRow = 0; iRow < test_data.screen_param.tx_num; iRow++) {
@@ -1431,17 +1433,17 @@ unsigned char FT5X46_TestItem_PanelDifferTest(bool *bTestResult)
 	FTS_TEST_SAVE_INFO("\n");
 #endif
 
-
-
-	for (iRow = 0; iRow < test_data.screen_param.tx_num; iRow++) {
+	///whether threshold is in range
+	////////////////////////////////To Determine  if in Range or not
+	for (iRow = 0; iRow < test_data.screen_param.tx_num; iRow++) { //  iRow = 1
 		for (iCol = 0; iCol < test_data.screen_param.rx_num; iCol++) {
 			if (test_data.mcap_detail_thr.invalid_node[iRow][iCol] == 0)
-				continue;
+				continue; //Invalid Node
 
 			iValue = m_DifferData[iRow][iCol];
 			iMin =  test_data.mcap_detail_thr.panel_differ_test_min[iRow][iCol];
 			iMax = test_data.mcap_detail_thr.panel_differ_test_max[iRow][iCol];
-
+			//FTS_TEST_SAVE_INFO("\n Node=(%d,  %d), Get_value=%d,  Set_Range=(%d, %d) \n", iRow+1, iCol+1, iValue, iMin, iMax);
 			if (iValue < iMin || iValue > iMax) {
 				btmpresult = false;
 				FTS_TEST_SAVE_INFO("\nOut Of Range.  Node=(%d,  %d), Get_value=%d,  Set_Range=(%d, %d) \n", \
@@ -1449,9 +1451,9 @@ unsigned char FT5X46_TestItem_PanelDifferTest(bool *bTestResult)
 			}
 		}
 	}
+	/////////////////////////// end determine
 
-
-
+	////>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>get test data ,and save to .csv file
 	for (i = 0; i <  test_data.screen_param.tx_num; i++) {
 		for (j = 0; j <  test_data.screen_param.rx_num; j++) {
 			m_absDifferData[i][j] = abs(m_DifferData[i][j]);
@@ -1465,16 +1467,16 @@ unsigned char FT5X46_TestItem_PanelDifferTest(bool *bTestResult)
 		}
 	}
 	Save_Test_Data(m_absDifferData, "Panel Differ Test", 0, test_data.screen_param.tx_num, test_data.screen_param.rx_num, 1);
-
+	////<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<get test data ,and save to .csv file
 
 	AvgValue = AvgValue / (test_data.screen_param.tx_num * test_data.screen_param.rx_num - InvalidNum);
 	FTS_TEST_SAVE_INFO("\nPanelDiffer:Max: %d, Min: %d, Avg: %d ", maxValue, minValue, AvgValue);
 
-	ReCode = write_reg(REG_NORMALIZE_TYPE, OriginRawDataType);
-	ReCode = write_reg(0x0A, OriginFrequecy);
-	ReCode = write_reg(0xFB, OriginFirState);
+	ReCode = write_reg(REG_NORMALIZE_TYPE, OriginRawDataType);//set to original value
+	ReCode = write_reg(0x0A, OriginFrequecy);//set to original value
+	ReCode = write_reg(0xFB, OriginFirState);//set to original value
 
-
+	//set V3 TP the origin mapping value
 	if (m_bV3TP) {
 		ReCode = write_reg(REG_MAPPING_SWITCH, strSwitch);
 		if (ReCode != ERROR_CODE_OK) {
@@ -1484,7 +1486,7 @@ unsigned char FT5X46_TestItem_PanelDifferTest(bool *bTestResult)
 	}
 
 
-
+	///////////////////////////-------------------------Result
 	if (btmpresult) {
 		*bTestResult = true;
 		FTS_TEST_SAVE_INFO("\n\n\n/==========Panel Differ Test is OK!");
@@ -1551,7 +1553,7 @@ unsigned char FT5X46_TestItem_PanelDiffer_Uniformity_Test(bool *bTestResult)
 		for (iRow = 0; iRow < test_data.screen_param.tx_num; iRow++) {
 			for (iCol = 1; iCol < test_data.screen_param.rx_num; iCol++) {
 				if (test_data.mcap_detail_thr.invalid_node[iRow][iCol] == 0)
-					continue;
+					continue; //Invalid Node
 
 				Min = 0;
 				Max = g_stCfg_FT5X46_BasicThreshold.PanelDiffer_Uniformity_Tx_Hole;
@@ -1597,9 +1599,9 @@ unsigned char FT5X46_TestItem_PanelDiffer_Uniformity_Test(bool *bTestResult)
 		for (iRow = 1; iRow < test_data.screen_param.tx_num; iRow++) {
 			for (iCol = 0; iCol < test_data.screen_param.rx_num; iCol++) {
 				if (test_data.mcap_detail_thr.invalid_node[iRow][iCol] == 0)
-					continue;
+					continue; //Invalid Node
 
-				Min = 0 ;
+				Min = 0 ; // minHole[iRow][iCol];
 				Max = g_stCfg_FT5X46_BasicThreshold.PanelDiffer_Uniformity_Rx_Hole;
 				base = test_data.mcap_detail_thr.PanelDiffer_Uniformity_RxLinearityTest_Max[iRow][iCol];
 				tmp = RxLinearity[iRow][iCol];
@@ -1646,8 +1648,8 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 	unsigned char strSwitch = 1;
 	bool  bCapShortTest = false;
 	int *iAdcData  = NULL;
-	int fKcal = 0;
-	int *fMShortResistance = NULL, *fGShortResistance = NULL;
+	int fKcal = 0;  //  float fKcal = 0;
+	int *fMShortResistance = NULL, *fGShortResistance = NULL;   //  loat *fMShortResistance, *fGShortResistance;
 	int iDoffset = 0, iDsen = 0, iDrefn = 0;
 	int iMin_CG = 0;
 	int iCount = 0;
@@ -1658,7 +1660,7 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 
 	FTS_TEST_SAVE_INFO("\n\n\n\n\n==============================Test Item: -----  Weak Short-Circuit Test \r\n\r\n");
 
-	ReCode = enter_work_mode();
+	ReCode = enter_work_mode();   //
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\n enter_work_mode failed.. Error Code: %d", ReCode);
 		btmpresult = false;
@@ -1666,8 +1668,8 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 	}
 	sys_delay(200);
 
-
-	ReCode = read_reg(0xB1, &IcValue);
+	//read 0xb1, <=0x05||==0xff:version E     =0x06 || others:version F
+	ReCode = read_reg(0xB1, &IcValue);//Get IC type
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\n\n Read 0xB1 IcValue error. Error Code: %d\n", ReCode);
 		btmpresult = false;
@@ -1676,7 +1678,7 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 		FTS_TEST_SAVE_INFO("\n IcValue:0x%02x.  \n", IcValue);
 
 	iRsen = 57;
-
+	//New test item only for Weak Short Test
 	iCCRsen = g_stCfg_FT5X46_BasicThreshold.WeakShortTest_CC_Rsen;
 	bCapShortTest = g_stCfg_FT5X46_BasicThreshold.WeakShortTest_CapShortTest;
 	FTS_TEST_SAVE_INFO("\n iCCRsen:%d.  \n", iCCRsen);
@@ -1690,9 +1692,9 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 		goto TEST_ERR;
 	}
 
-
-
-
+	//Determine whether for v3 TP first, and then read the value of the 0x54
+	//and check the mapping type is right or not,if not, write the register
+	//weakshort test mapping,  before mapping 0x54=1;after mapping 0x54=0;
 	if (m_bV3TP) {
 		ReCode = read_reg(REG_MAPPING_SWITCH, &strSwitch);
 		if (strSwitch != 1) {
@@ -1708,10 +1710,10 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 			rx_num = test_data.screen_param.rx_num;
 		}
 	} else {
-
-
-		ReCode = read_reg(0x02, &tx_num);
-		ReCode = read_reg(0x03, &rx_num);
+		//TxNum register 0x02(Read Only)
+		//RxNum register 0x03(Read Only)
+		ReCode = read_reg(0x02, &tx_num);//Get Tx
+		ReCode = read_reg(0x03, &rx_num);//Get Rx
 		FTS_TEST_SAVE_INFO("\nNewly acquired TxNum:%d, RxNum:%d", tx_num, rx_num);
 	}
 
@@ -1723,7 +1725,7 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 	FTS_TEST_INFO("\nNewly acquired TxNum:%d, RxNum:%d", tx_num, rx_num);
 	iChannelNum = tx_num + rx_num;
 	iMaxTx = tx_num;
-	iAllAdcDataNum = 1 + (1 + tx_num + rx_num) * 2;
+	iAllAdcDataNum = 1 + (1 + tx_num + rx_num) * 2; //The total channel number + calibration data + channel calibration data + Offset
 	FTS_TEST_INFO("iAllAdcDataNum:%d", iAllAdcDataNum);
 	StartScan();
 
@@ -1732,7 +1734,7 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 	}
 
 	iAdcData = fts_malloc(iAllAdcDataNum * sizeof(int));
-	memset(iAdcData, 0, iAllAdcDataNum);
+	memset(iAdcData, 0, iAllAdcDataNum);    //  memset(iAdcData, 0, sizeof(iAdcData));
 
 	for (i = 0; i < 5; i++) {
 		memset(iAdcData, 0, iAllAdcDataNum);
@@ -1740,7 +1742,7 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 		sys_delay(50);
 		if (ReCode != ERROR_CODE_OK) {
 			continue;
-		} else {
+		} else {    //  adc function ok
 			if (0 == iAdcData[0] || 0 == iAdcData[1] || 0xFFFF == iAdcData[0] || 0xFFFF == iAdcData[1]) {
 				continue;
 			}
@@ -1760,10 +1762,10 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 	iClbData_Ground = iAdcData[1];
 	iClbData_Mutual = iAdcData[2 + iChannelNum];
 
-
+	//  show value.
 #if 0
-
-
+	///////////////////////Channel and Ground
+	///////////////////////Channel and Channel
 	for (i = 0; i < iAllAdcDataNum/*iChannelNum*/; i++) {
 		if (i <= (iChannelNum + 1)) {
 			if (i == 0)
@@ -1792,26 +1794,26 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 		}
 	}
 	FTS_TEST_SAVE_INFO("\n\r\n");
-
+	//print all Adc value
 #endif
 
 
 
-	fMShortResistance = fts_malloc(iChannelNum * sizeof(int));
+	fMShortResistance = fts_malloc(iChannelNum * sizeof(int));      //  fMShortResistance = new float[iChannelNum];
 	memset(fMShortResistance, 0, iChannelNum);
-	fGShortResistance =  fts_malloc(iChannelNum * sizeof(int));
+	fGShortResistance =  fts_malloc(iChannelNum * sizeof(int)); //      fGShortResistance = new float[iChannelNum];
 	memset(fGShortResistance, 0, iChannelNum);
 
-
+	/////////////////////////////////////////////Channel and Ground
 	iMin_CG = g_stCfg_FT5X46_BasicThreshold.WeakShortTest_CG;
 
 	iDoffset = iOffset - 1024;
 	iDrefn = iClbData_Ground;
-	fKcal = 1;
+	fKcal = 1;  // 1.0;
 
 	for (i = 0; i < iChannelNum; i++) {
 		iDsen = iAdcData[i + 2];
-		if ((2047 + iDoffset) - iDsen <= 0) {
+		if ((2047 + iDoffset) - iDsen <= 0) { //<=0 PASS
 			continue;
 		}
 
@@ -1819,21 +1821,21 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 
 			fGShortResistance[i] = (iDsen - iDoffset + 410) * 25 * fKcal / (2047 + iDoffset - iDsen) - 3;
 		} else {
-			if (iDrefn - iDsen <= 0) {
+			if (iDrefn - iDsen <= 0) { //<=0 PASS
 				fGShortResistance[i] = iMin_CG;
 				FTS_TEST_SAVE_INFO("\n%02d  ", fGShortResistance[i]);
 
 				continue;
 			}
 
-			fGShortResistance[i] = (((iDsen - iDoffset + 384) / (iDrefn - iDsen) * 57) - 1);
+			fGShortResistance[i] = (((iDsen - iDoffset + 384) / (iDrefn - iDsen) * 57) - 1);//((iDsen - iDoffset + 384) * iRsen / (/*temp*/iDrefn - iDsen)) * fKcal - 1.2;
 		}
 		if (fGShortResistance[i] < 0)
 			fGShortResistance[i] = 0;
 
 
 
-		if ((iMin_CG > fGShortResistance[i]) || (iDsen - iDoffset < 0)) {
+		if ((iMin_CG > fGShortResistance[i]) || (iDsen - iDoffset < 0)) { //<=0 ShortResistance = 0
 			iCount++;
 			if (i + 1 <= iMaxTx)
 				FTS_TEST_SAVE_INFO("\nTx%02d: %02d (k¦¸),	", i + 1, fGShortResistance[i]);
@@ -1846,13 +1848,13 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 	}
 
 
-
+	//print Channel and Ground value
 	if (iCount > 0) {
 
 		btmpresult = false;
 	}
 
-
+	/////////////////////////////////////////////Channel and Channel
 	iMin_CC = g_stCfg_FT5X46_BasicThreshold.WeakShortTest_CC;
 
 	if ((IcValue == 0x06 || IcValue < 0xff) && iRsen != iCCRsen) {
@@ -1870,13 +1872,13 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 			if (iDsen - iDrefn < 0)
 				continue;
 		}
-
+		//use new formula
 		if (IcValue <= 0x05 || IcValue == 0xff) {
 			iMa = iDsen - iDCal;
 			iMa = iMa ? iMa : 1;
 			fMShortResistance[i] = ((2047 + iDoffset - iDCal) * 24 / iMa - 27) * fKcal - 6;
 		} else {
-			if (iDrefn - iDsen <= 0) {
+			if (iDrefn - iDsen <= 0) { //<=0 PASS
 				fMShortResistance[i] = iMin_CC;
 				FTS_TEST_SAVE_INFO("\n%02d  ", fMShortResistance[i]);
 				continue;
@@ -1909,12 +1911,12 @@ unsigned char FT5X46_TestItem_WeakShortTest(bool *bTestResult)
 		btmpresult = false;
 	}
 
-
+	//take "cap short test" and the first test will be wrong
 	if (bCapShortTest && iCount) {
 		FTS_TEST_SAVE_INFO("\n bCapShortTest && iCount.  need to add ......");
 	}
 
-
+	//set V3 TP the origin mapping value
 	if (m_bV3TP) {
 		ReCode = write_reg(REG_MAPPING_SWITCH, strSwitch);
 		sys_delay(50);
@@ -1991,16 +1993,16 @@ static int StartScan(void)
 {
 	unsigned char RegVal = 0;
 	unsigned char times = 0;
-	const unsigned char MaxTimes = 250;
+	const unsigned char MaxTimes = 250;  //The longest wait 160ms
 	unsigned char ReCode = ERROR_CODE_COMM_ERROR;
 
 	ReCode = read_reg(DEVIDE_MODE_ADDR, &RegVal);
 	if (ReCode == ERROR_CODE_OK) {
-		RegVal |= 0x80;
+		RegVal |= 0x80;     //Top bit position 1, start scan
 		ReCode = write_reg(DEVIDE_MODE_ADDR, RegVal);
 		if (ReCode == ERROR_CODE_OK) {
-			while (times++ < MaxTimes) {
-				sys_delay(16);
+			while (times++ < MaxTimes) {    //Wait for the scan to complete
+				sys_delay(16);   //16ms
 				ReCode = read_reg(DEVIDE_MODE_ADDR, &RegVal);
 				if (ReCode == ERROR_CODE_OK) {
 					if ((RegVal >> 7) == 0)
@@ -2049,15 +2051,15 @@ unsigned char ReadRawData(unsigned char Freq, unsigned char LineNum, int ByteNum
 		BytesNumInTestMode1 = BYTES_PER_TIME;
 	}
 
-	ReCode = write_reg(REG_LINE_NUM, LineNum);
+	ReCode = write_reg(REG_LINE_NUM, LineNum);//Set row addr;
 
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\nFailed to write REG_LINE_NUM! ");
 		goto READ_ERR;
 	}
 
-
-	I2C_wBuffer[0] = REG_RawBuf0;
+	//***********************************************************Read raw data
+	I2C_wBuffer[0] = REG_RawBuf0;   //set begin address
 	if (ReCode == ERROR_CODE_OK) {
 		ReCode = fts_i2c_read_write(I2C_wBuffer, 1, m_ucTempData, BytesNumInTestMode1);
 		if (ReCode != ERROR_CODE_OK) {
@@ -2070,7 +2072,7 @@ unsigned char ReadRawData(unsigned char Freq, unsigned char LineNum, int ByteNum
 		if (ReCode != ERROR_CODE_OK)
 			break;
 
-		if (i == iReadNum - 1) {
+		if (i == iReadNum - 1) { //last packet
 			ReCode = fts_i2c_read_write(NULL, 0, m_ucTempData + BYTES_PER_TIME * i, ByteNum - BYTES_PER_TIME * i);
 			if (ReCode != ERROR_CODE_OK) {
 				FTS_TEST_SAVE_INFO("\nread rawdata fts_i2c_read_write Failed!2 ");
@@ -2090,10 +2092,10 @@ unsigned char ReadRawData(unsigned char Freq, unsigned char LineNum, int ByteNum
 	if (ReCode == ERROR_CODE_OK) {
 		for (i = 0; i < (ByteNum >> 1); i++) {
 			pRevBuffer[i] = (m_ucTempData[i << 1] << 8) + m_ucTempData[(i << 1) + 1];
-
-
-
-
+			//if(pRevBuffer[i] & 0x8000)//have sign bit
+			//{
+			//  pRevBuffer[i] -= 0xffff + 1;
+			//}
 		}
 	}
 
@@ -2118,11 +2120,11 @@ unsigned char GetTxSC_CB(unsigned char index, unsigned char *pcbValue)
 	int packet_num = 0;
 	int packet_remainder = 0;
 
-	if (index < 128) {
+	if (index < 128) { //single read
 		*pcbValue = 0;
 		write_reg(REG_ScCbAddrR, index);
 		ReCode = read_reg(REG_ScCbBuf0, pcbValue);
-	} else {
+	} else { //Sequential Read length index-128
 		byte_num = index - 128;
 		packet_num = byte_num / BYTES_PER_TIME;
 		packet_remainder = byte_num % BYTES_PER_TIME;
@@ -2161,7 +2163,7 @@ static void Save_Test_Data(int iData[TX_NUM_MAX][RX_NUM_MAX], char *test_num, in
 	int iLen = 0;
 	int i = 0, j = 0;
 
-
+	//Save  Msg (itemcode is enough, ItemName is not necessary, so set it to "NA".)
 	iLen = snprintf(test_data.tmp_buffer, PAGE_SIZE, \
 				   "%s, %d, %d, %d, %d, %d, ", test_num, test_data.test_item_code, Row, Col, test_data.start_line, ItemCount);
 	memcpy(test_data.msg_area_line2 + test_data.len_msg_area_line2, test_data.tmp_buffer, iLen);
@@ -2170,10 +2172,10 @@ static void Save_Test_Data(int iData[TX_NUM_MAX][RX_NUM_MAX], char *test_num, in
 	test_data.start_line += Row;
 	test_data.test_data_count++;
 
-
+	//Save Data
 	for (i = 0 + iArrayIndex; (i < Row + iArrayIndex)  && (i < TX_NUM_MAX); i++) {
 		for (j = 0; (j < Col) && (j < RX_NUM_MAX); j++) {
-			if (j == (Col - 1))
+			if (j == (Col - 1)) //The Last Data of the Row, add "\n"
 				iLen = snprintf(test_data.tmp_buffer, PAGE_SIZE, "%d, \n",  iData[i][j]);
 			else
 				iLen = snprintf(test_data.tmp_buffer, PAGE_SIZE, "%d, ", iData[i][j]);
@@ -2195,9 +2197,9 @@ static void Save_Test_Data(int iData[TX_NUM_MAX][RX_NUM_MAX], char *test_num, in
 static unsigned char GetChannelNum(void)
 {
 	unsigned char ReCode;
-	unsigned char rBuffer[1];
+	unsigned char rBuffer[1]; //= new unsigned char;
 
-
+	//m_strCurrentTestMsg = "Get Tx Num...";
 	ReCode = GetPanelRows(rBuffer);
 	if (ReCode == ERROR_CODE_OK) {
 		test_data.screen_param.tx_num = rBuffer[0];
@@ -2211,7 +2213,7 @@ static unsigned char GetChannelNum(void)
 		FTS_TEST_SAVE_INFO("\nFailed to get Tx number");
 	}
 
-
+	///////////////m_strCurrentTestMsg = "Get Rx Num...";
 
 	ReCode = GetPanelCols(rBuffer);
 	if (ReCode == ERROR_CODE_OK) {
@@ -2242,7 +2244,7 @@ static unsigned char GetRawData(void)
 	int iRow = 0;
 	int iCol = 0;
 
-
+	//--------------------------------------------Enter Factory Mode
 	ReCode = enter_factory_mode();
 	if (ERROR_CODE_OK != ReCode) {
 		FTS_TEST_SAVE_INFO("\nFailed to Enter Factory Mode...");
@@ -2250,7 +2252,7 @@ static unsigned char GetRawData(void)
 	}
 
 
-
+	//--------------------------------------------Check Num of Channel
 	if (0 == (test_data.screen_param.tx_num + test_data.screen_param.rx_num)) {
 		ReCode = GetChannelNum();
 		if (ERROR_CODE_OK != ReCode) {
@@ -2259,14 +2261,14 @@ static unsigned char GetRawData(void)
 		}
 	}
 
-
+	//--------------------------------------------Start Scanning
 	ReCode = StartScan();
 	if (ERROR_CODE_OK != ReCode) {
 		FTS_TEST_SAVE_INFO("\nFailed to Scan ...");
 		return ReCode;
 	}
 
-
+	//--------------------------------------------Read RawData, Only MCAP
 	memset(m_RawData, 0, sizeof(m_RawData));
 	ReCode = ReadRawData(1, 0xAA, (test_data.screen_param.tx_num * test_data.screen_param.rx_num) * 2, m_iTempRawData);
 	for (iRow = 0; iRow < test_data.screen_param.tx_num; iRow++) {
@@ -2286,7 +2288,7 @@ static unsigned char GetRawData(void)
 static void ShowRawData(void)
 {
 	int iRow, iCol;
-
+	//----------------------------------------------------------Show RawData
 	for (iRow = 0; iRow < test_data.screen_param.tx_num; iRow++) {
 		FTS_TEST_SAVE_INFO("\nTx%2d:", iRow + 1);
 		for (iCol = 0; iCol < test_data.screen_param.rx_num; iCol++) {
@@ -2306,7 +2308,7 @@ static void ShowRawData(void)
 static unsigned char GetChannelNumNoMapping(void)
 {
 	unsigned char ReCode;
-	unsigned char rBuffer[1];
+	unsigned char rBuffer[1]; //= new unsigned char;
 
 
 	FTS_TEST_SAVE_INFO("\nGet Tx Num...");
@@ -2340,13 +2342,13 @@ static unsigned char SwitchToNoMapping(void)
 	unsigned char chPattern = -1;
 	unsigned char ReCode = ERROR_CODE_OK;
 	unsigned char RegData = -1;
-	ReCode = read_reg(REG_PATTERN, &chPattern);
+	ReCode = read_reg(REG_PATTERN, &chPattern);//
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\nSwitch To NoMapping Failed!");
 		goto READ_ERR;
 	}
 
-	if (1 == chPattern) {
+	if (1 == chPattern) { // 1: V3 Pattern
 		RegData = -1;
 		ReCode = read_reg(REG_MAPPING_SWITCH, &RegData);
 		if (ReCode != ERROR_CODE_OK) {
@@ -2355,7 +2357,7 @@ static unsigned char SwitchToNoMapping(void)
 		}
 
 		if (1 != RegData) {
-			ReCode = write_reg(REG_MAPPING_SWITCH, 1);
+			ReCode = write_reg(REG_MAPPING_SWITCH, 1);  //0-mapping 1-no mampping
 			if (ReCode != ERROR_CODE_OK) {
 				FTS_TEST_SAVE_INFO("\nwrite REG_MAPPING_SWITCH Failed!");
 				goto READ_ERR;
@@ -2384,26 +2386,26 @@ static bool GetTestCondition(int iTestType, unsigned char ucChannelValue)
 {
 	bool bIsNeeded = false;
 	switch (iTestType) {
-	case WT_NeedProofOnTest:
+	case WT_NeedProofOnTest://Bit5:  0:test waterProof mode ;  1 not test waterProof mode
 		bIsNeeded = !(ucChannelValue & 0x20);
 		break;
-	case WT_NeedProofOffTest:
+	case WT_NeedProofOffTest://Bit7: 0: test normal mode  1:not test normal mode
 		bIsNeeded = !(ucChannelValue & 0x80);
 		break;
 	case WT_NeedTxOnVal:
-
-
+		//Bit6:  0 : test waterProof Rx+Tx  1:test waterProof single channel
+		//Bit2:  0: test waterProof Tx only;  1:  test waterProof Rx only
 		bIsNeeded = !(ucChannelValue & 0x40) || !(ucChannelValue & 0x04);
 		break;
 	case WT_NeedRxOnVal:
-
-
+		//Bit6:  0 : test waterProof Rx+Tx  1 test waterProof single channel
+		//Bit2:  0: test waterProof Tx only;  1:  test waterProof Rx only
 		bIsNeeded = !(ucChannelValue & 0x40) || (ucChannelValue & 0x04);
 		break;
-	case WT_NeedTxOffVal:
+	case WT_NeedTxOffVal://Bit1,Bit0:  00:test normal Tx; 10: test normal Rx+Tx
 		bIsNeeded = (0x00 == (ucChannelValue & 0x03)) || (0x02 == (ucChannelValue & 0x03));
 		break;
-	case WT_NeedRxOffVal:
+	case WT_NeedRxOffVal://Bit1,Bit0:  01: test normal Rx;    10: test normal Rx+Tx
 		bIsNeeded = (0x01 == (ucChannelValue & 0x03)) || (0x02 == (ucChannelValue & 0x03));
 		break;
 	default:
@@ -2431,7 +2433,7 @@ static unsigned char WeakShort_GetAdcData(int AllAdcDataLen, int *pRevBuffer)
 		return -EIO;
 	}
 
-	ReCode = write_reg(0x07, 0x01);
+	ReCode = write_reg(0x07, 0x01);// Test weak short once,after host send an enable command
 	if (ReCode != ERROR_CODE_OK) {
 		FTS_TEST_SAVE_INFO("\nWriteReg error. \n");
 		goto EndGetAdc;
@@ -2439,7 +2441,7 @@ static unsigned char WeakShort_GetAdcData(int AllAdcDataLen, int *pRevBuffer)
 
 	sys_delay(100);
 
-	for (i = 0; i < 100 * 5; i++) {
+	for (i = 0; i < 100 * 5; i++) { // Data ready,and FW set reg 0x07 to 0.
 		sys_delay(10);
 		ReCode = read_reg(0x07, &Data);
 		if (ReCode == ERROR_CODE_OK) {
@@ -2455,7 +2457,7 @@ static unsigned char WeakShort_GetAdcData(int AllAdcDataLen, int *pRevBuffer)
 		ReCode = ERROR_CODE_COMM_ERROR;
 		goto EndGetAdc;
 	}
-	sys_delay(300);
+	sys_delay(300);  //  frank add. 20160517
 	cmd = 0xF4;
 
 	packet_num = AllAdcDataLen / BYTES_PER_TIME;
@@ -2496,59 +2498,59 @@ void init_testitem_ft5x46(char *strIniFile)
 	char str[512];
 	FTS_TEST_FUNC_ENTER();
 
-
+	//////////////////////////////////////////////////////////// FW Version
 	GetPrivateProfileString("TestItem", "FW_VERSION_TEST", "0", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.FW_VERSION_TEST = fts_atoi(str);
 
-
+	//////////////////////////////////////////////////////////// Factory ID
 	GetPrivateProfileString("TestItem", "FACTORY_ID_TEST", "0", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.FACTORY_ID_TEST = fts_atoi(str);
 
-
+	//////////////////////////////////////////////////////////// Project Code Test
 	GetPrivateProfileString("TestItem", "PROJECT_CODE_TEST", "0", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.PROJECT_CODE_TEST = fts_atoi(str);
 
-
+	/////////////////////////////////// RawData Test
 	GetPrivateProfileString("TestItem", "RAWDATA_TEST", "1", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.RAWDATA_TEST = fts_atoi(str);
 
-
+	/////////////////////////////////// SCAP_CB_TEST
 	GetPrivateProfileString("TestItem", "SCAP_CB_TEST", "1", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.SCAP_CB_TEST = fts_atoi(str);
 
-
+	/////////////////////////////////// SCAP_RAWDATA_TEST
 	GetPrivateProfileString("TestItem", "SCAP_RAWDATA_TEST", "1", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.SCAP_RAWDATA_TEST = fts_atoi(str);
 
-
+	/////////////////////////////////// CHANNEL_NUM_TEST
 	GetPrivateProfileString("TestItem", "CHANNEL_NUM_TEST", "1", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.CHANNEL_NUM_TEST = fts_atoi(str);
 
-
+	/////////////////////////////////// NOISE_TEST
 	GetPrivateProfileString("TestItem", "NOISE_TEST", "0", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.NOISE_TEST = fts_atoi(str);
 
-
+	/////////////////////////////////// WEAK_SHORT_CIRCUIT_TEST
 	GetPrivateProfileString("TestItem", "WEAK_SHORT_CIRCUIT_TEST", "0", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.WEAK_SHORT_CIRCUIT_TEST = fts_atoi(str);
 
-
+	/////////////////////////////////// UNIFORMITY_TEST
 	GetPrivateProfileString("TestItem", "UNIFORMITY_TEST", "0", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.UNIFORMITY_TEST = fts_atoi(str);
 
-
+	/////////////////////////////////// panel differ_TEST
 	GetPrivateProfileString("TestItem", "PANEL_DIFFER_TEST", "0", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.PANEL_DIFFER_TEST = fts_atoi(str);
 
-
+	/////////////////////////////////// panel differ uniformity TEST
 	GetPrivateProfileString("TestItem", "PANEL_DIFFER_UNIFORMITY_TEST", "0", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.PANEL_DIFFER_UNIFORMITY_TEST = fts_atoi(str);
 
-
+	///////////////////////////////////SITO_RAWDATA_UNIFORMITY_TEST
 	GetPrivateProfileString("TestItem", "SITO_RAWDATA_UNIFORMITY_TEST", "0", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.SITO_RAWDATA_UNIFORMITY_TEST = fts_atoi(str);
 
-
+	///////////////////////////////////LCD_NOISE_TEST
 	GetPrivateProfileString("TestItem", "LCD_NOISE_TEST", "0", str, strIniFile);
 	g_stCfg_FT5X46_TestItem.LCD_NOISE_TEST = fts_atoi(str);
 
@@ -2559,15 +2561,15 @@ void init_basicthreshold_ft5x46(char *strIniFile)
 	char str[512];
 
 	FTS_TEST_FUNC_ENTER();
-
+	//////////////////////////////////////////////////////////// FW Version
 	GetPrivateProfileString("Basic_Threshold", "FW_VER_VALUE", "0", str, strIniFile);
 	g_stCfg_FT5X46_BasicThreshold.FW_VER_VALUE = fts_atoi(str);
 
-
+	//////////////////////////////////////////////////////////// Factory ID
 	GetPrivateProfileString("Basic_Threshold", "Factory_ID_Number", "255", str, strIniFile);
 	g_stCfg_FT5X46_BasicThreshold.Factory_ID_Number = fts_atoi(str);
 
-
+	//////////////////////////////////////////////////////////// Project Code Test
 	GetPrivateProfileString("Basic_Threshold", "Project_Code", " ", str, strIniFile);
 	snprintf(g_stCfg_FT5X46_BasicThreshold.Project_Code, PAGE_SIZE, "%s", str);
 
@@ -2689,13 +2691,13 @@ void init_basicthreshold_ft5x46(char *strIniFile)
 	GetPrivateProfileString("Basic_Threshold", "UniformityTest_MinMax_Hole", "70", str, strIniFile);
 	g_stCfg_FT5X46_BasicThreshold.Uniformity_MinMax_Hole = fts_atoi(str);
 
-
+	//panel differ
 	GetPrivateProfileString("Basic_Threshold", "PanelDifferTest_Min", "150", str, strIniFile);
 	g_stCfg_FT5X46_BasicThreshold.PanelDifferTest_Min = fts_atoi(str);
 	GetPrivateProfileString("Basic_Threshold", "PanelDifferTest_Max", "1000", str, strIniFile);
 	g_stCfg_FT5X46_BasicThreshold.PanelDifferTest_Max = fts_atoi(str);
 
-
+	//panel differ uniformity
 	GetPrivateProfileString("Basic_Threshold", "PanelDiffer_UniformityTest_Check_Tx", "1", str, strIniFile);
 	g_stCfg_FT5X46_BasicThreshold.PanelDiffer_Uniformity_CheckTx = fts_atoi(str);
 	GetPrivateProfileString("Basic_Threshold", "PanelDiffer_UniformityTest_Tx_Hole", "20", str, strIniFile);
@@ -2709,7 +2711,7 @@ void init_basicthreshold_ft5x46(char *strIniFile)
 	GetPrivateProfileString("Basic_Threshold", "PanelDiffer_UniformityTest_MinMax_Hole", "70", str, strIniFile);
 	g_stCfg_FT5X46_BasicThreshold.PanelDiffer_Uniformity_MinMax_Hole = fts_atoi(str);
 
-
+	//RawdtaUniformityTest
 	GetPrivateProfileString("Basic_Threshold", "SITO_RawdataUniformityTest_Check_Tx", "0", str, strIniFile);
 	g_stCfg_FT5X46_BasicThreshold.SITO_RawdtaUniformityTest_Check_Tx = fts_atoi(str);
 	GetPrivateProfileString("Basic_Threshold", "SITO_RawdataUniformityTest_Check_Rx", "0", str, strIniFile);
@@ -2725,7 +2727,7 @@ void init_basicthreshold_ft5x46(char *strIniFile)
 	GetPrivateProfileString("Basic_Threshold", "WeakShortTest_CapShortTest", "0", str, strIniFile);
 	g_stCfg_FT5X46_BasicThreshold.WeakShortTest_CapShortTest = fts_atoi(str);
 
-
+	//Lcd Noise Test
 	GetPrivateProfileString("Basic_Threshold", "Lcd_Noise_Max_Frame", "200", str, strIniFile);
 	g_stCfg_FT5X46_BasicThreshold.Lcd_Noise_MaxFrame = fts_atoi(str);
 	GetPrivateProfileString("Basic_Threshold", "Lcd_Noise_Conficient", "100", str, strIniFile);
@@ -2776,88 +2778,88 @@ void set_testitem_sequence_ft5x46(void)
 
 	FTS_TEST_FUNC_ENTER();
 
-
+	//////////////////////////////////////////////////FACTORY_ID_TEST
 	if (g_stCfg_FT5X46_TestItem.FACTORY_ID_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_FACTORY_ID_TEST);
 	}
 
-
+	//////////////////////////////////////////////////Project Code Test
 	if (g_stCfg_FT5X46_TestItem.PROJECT_CODE_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_PROJECT_CODE_TEST);
 	}
 
-
+	//////////////////////////////////////////////////FW Version Test
 	if (g_stCfg_FT5X46_TestItem.FW_VERSION_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_FW_VERSION_TEST);
 	}
 
-
+	//////////////////////////////////////////////////Enter Factory Mode
 	fts_set_testitem(Code_FT5X46_ENTER_FACTORY_MODE);
 
-
+	//////////////////////////////////////////////////CHANNEL_NUM_TEST
 	if (g_stCfg_FT5X46_TestItem.CHANNEL_NUM_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_CHANNEL_NUM_TEST);
 	}
 
-
+	//////////////////////////////////////////////////LCD_NOISE_TEST
 	if (g_stCfg_FT5X46_TestItem.LCD_NOISE_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_LCD_NOISE_TEST);
 	}
 
-
+	//////////////////////////////////////////////////NOISE_TEST
 	if (g_stCfg_FT5X46_TestItem.NOISE_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_NOISE_TEST);
 	}
 
-
+	//////////////////////////////////////////////////RawData Test
 	if (g_stCfg_FT5X46_TestItem.RAWDATA_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_RAWDATA_TEST);
 	}
 
-
+	//////////////////////////////////////////////////Rawdata Uniformity Test
 	if (g_stCfg_FT5X46_TestItem.UNIFORMITY_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_UNIFORMITY_TEST);
 	}
 
-
+	//////////////////////////////////////////////////SITO Rawdata Uniformity Test
 	if (g_stCfg_FT5X46_TestItem.SITO_RAWDATA_UNIFORMITY_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_SITO_RAWDATA_UNIFORMITY_TEST);
 	}
 
-
+	//////////////////////////////////////////////////SCAP_CB_TEST
 	if (g_stCfg_FT5X46_TestItem.SCAP_CB_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_SCAP_CB_TEST);
 	}
 
-
+	//////////////////////////////////////////////////SCAP_RAWDATA_TEST
 	if (g_stCfg_FT5X46_TestItem.SCAP_RAWDATA_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_SCAP_RAWDATA_TEST);
 	}
 
-
+	//////////////////////////////////////////////////WEAK_SHORT_CIRCUIT_TEST
 	if (g_stCfg_FT5X46_TestItem.WEAK_SHORT_CIRCUIT_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_WEAK_SHORT_CIRCUIT_TEST);
 	}
 
-
+	//////////////////////////////////////////////////panel differ_TEST
 	if (g_stCfg_FT5X46_TestItem.PANEL_DIFFER_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_PANELDIFFER_TEST);
 	}
 
-
+	//////////////////////////////////////////////////panel PANEL_DIFFER_UNIFORMITY_TEST
 	if (g_stCfg_FT5X46_TestItem.PANEL_DIFFER_UNIFORMITY_TEST == 1) {
 
 		fts_set_testitem(Code_FT5X46_PANELDIFFER_UNIFORMITY_TEST);

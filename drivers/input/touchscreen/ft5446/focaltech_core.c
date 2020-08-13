@@ -3,7 +3,7 @@
  * FocalTech TouchScreen driver.
  *
  * Copyright (c) 2012-2018, FocalTech Systems, Ltd., all rights reserved.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -89,7 +89,7 @@ static void fts_resume_func(struct work_struct *work)
 
 	fts_ts_resume(&data->client->dev);
 
-
+	//mutex_unlock(&report_mutex);
 }
 
 void fts_resume_queue_work(void)
@@ -715,7 +715,7 @@ static int fts_input_report_b(struct fts_ts_data *data)
 			touchs |= BIT(events[i].id);
 			data->touchs |= BIT(events[i].id);
 
-
+			//events[i].flag = FTS_TOUCH_DOWN;
 			if (events[i].flag == FTS_TOUCH_DOWN) {
 				FTS_DEBUG("[B]P%d(%d, %d)[p:%d,tm:%d] DOWN!", events[i].id, events[i].x,
 						events[i].y, events[i].p, events[i].area);
@@ -1701,13 +1701,13 @@ static int fts_ts_remove(struct i2c_client *client)
 	return 0;
 }
 
-
+//#ifdef CONFIG_PM
 static const struct dev_pm_ops fts_ts_pm_ops = {
 	.suspend = fts_ts_suspend,
 	.resume = fts_ts_resume,
 };
 
-
+//#endif
 
 /*****************************************************************************
 *  Name: fts_ts_suspend
@@ -1759,11 +1759,11 @@ static int fts_ts_suspend(struct device *dev)
 #if FTS_PINCTRL_EN
 	fts_pinctrl_select_suspend(ts_data);
 #endif
-
+//#else
 	/* TP enter sleep mode */
-
-
-
+	//ret = fts_i2c_write_reg(ts_data->client, FTS_REG_POWER_MODE, FTS_REG_POWER_MODE_SLEEP_VALUE);
+	//if (ret < 0)
+		//FTS_ERROR("set TP to sleep mode fail, ret=%d", ret);
 #endif
 
 	ts_data->suspended = true;
@@ -1791,7 +1791,7 @@ static int fts_ts_resume(struct device *dev)
 	fts_release_all_finger();
 
 #if FTS_POWER_SOURCE_CUST_EN
-
+	//fts_power_source_ctrl(ts_data, ENABLE);
 #if FTS_PINCTRL_EN
 	fts_pinctrl_select_normal(ts_data);
 #endif
@@ -1842,9 +1842,9 @@ static struct i2c_driver fts_ts_driver = {
 		.name = FTS_DRIVER_NAME,
 		.owner = THIS_MODULE,
 		.of_match_table = fts_match_table,
-
+//#ifdef CONFIG_PM
 		.pm = &fts_ts_pm_ops,
-
+//#endif
 
 	},
 	.id_table = fts_ts_id,
