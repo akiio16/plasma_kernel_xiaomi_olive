@@ -2,7 +2,7 @@
  * ILITEK Touch IC driver
  *
  * Copyright (C) 2011 ILI Technology Corporation.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * Author: Dicky Chiang <dicky_chiang@ilitek.com>
  *
@@ -119,8 +119,8 @@
 #define TP_SUSPEND_PRIO			ENABLE
 
 /* Plaform compatibility */
-
-
+// #define CONFIG_PLAT_SPRD
+//#define SPI_DMA_TRANSFER_SPLIT
 
 /* Path */
 #define DEBUG_DATA_FILE_SIZE		(10*K)

@@ -2,7 +2,7 @@
  * ILITEK Touch IC driver
  *
  * Copyright (C) 2011 ILI Technology Corporation.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * Author: Dicky Chiang <dicky_chiang@ilitek.com>
  *
@@ -159,7 +159,7 @@ static void dma_trigger_reg_setting(u32 reg_dest_addr, u32 flash_start_addr, u32
 		ipio_err("Write %lu at %x failed\n", INTR1_reg_flash_int_flag, INTR1_ADDR);
 	if (ilitek_ice_mode_bit_mask_write(INTR1_ADDR, INTR1_reg_dma_ch0_int_flag, (1 << 17)) < 0)
 		ipio_err("Write %lu at %x failed\n", INTR1_reg_dma_ch0_int_flag, INTR1_ADDR);
-	if (ilitek_ice_mode_bit_mask_write(0x041013, BIT(0), 1) < 0)
+	if (ilitek_ice_mode_bit_mask_write(0x041013, BIT(0), 1) < 0) //patch
 		ipio_err("Write %lu at %x failed\n", BIT(0), 0x041013);
 
 	/* DMA Trigger */

@@ -2,7 +2,7 @@
  * ILITEK Touch IC driver
  *
  * Copyright (C) 2011 ILI Technology Corporation.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * Author: Dicky Chiang <dicky_chiang@ilitek.com>
  *
@@ -584,7 +584,7 @@ static int parser_get_ini_phy_line(char *data, char *buffer, int maxlen)
 				iRetNum++;
 			break;
 		} else if (ch1 == 0x00) {
-
+			//iRetNum = -1;
 			break;	/* file end */
 		}
 
@@ -3163,7 +3163,7 @@ int ilitek_tddi_mp_test_main(char *apk, bool lcm_on)
 		if (lcm_on) {
 			mp_test_run("noise peak to peak(with panel)");
 			mp_test_run("noise peak to peak(ic only)");
-			mp_test_run("short test -ili9881");
+			mp_test_run("short test -ili9881"); //compatible with old ini version.
 			mp_test_run("short test");
 			mp_test_run("open test(integration)_sp");
 			mp_test_run("raw data(no bk)");

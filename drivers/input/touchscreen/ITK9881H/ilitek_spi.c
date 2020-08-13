@@ -2,7 +2,7 @@
  * ILITEK Touch IC driver
  *
  * Copyright (C) 2011 ILI Technology Corporation.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * Author: Dicky Chiang <dicky_chiang@ilitek.com>
  *
@@ -28,8 +28,8 @@ struct touch_bus_info {
 
 struct ilitek_tddi_dev *idev;
 
-#define DMA_TRANSFER_MAX_CHUNK		64
-#define DMA_TRANSFER_MAX_LEN		1024
+#define DMA_TRANSFER_MAX_CHUNK		64   // number of chunks to be transferred.
+#define DMA_TRANSFER_MAX_LEN		1024 // length of a chunk.
 struct spi_transfer	xfer[DMA_TRANSFER_MAX_CHUNK + 1];
 
 int ilitek_spi_write_then_read_split(struct spi_device *spi,

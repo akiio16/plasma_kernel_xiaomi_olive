@@ -2,7 +2,7 @@
  * ILITEK Touch IC driver
  *
  * Copyright (C) 2011 ILI Technology Corporation.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * Author: Dicky Chiang <dicky_chiang@ilitek.com>
  *
@@ -362,7 +362,7 @@ static ssize_t ilitek_proc_get_delta_data_read(struct file *pFile, char __user *
 	}
 
 	cmd[0] = 0xB7;
-	cmd[1] = 0x1;
+	cmd[1] = 0x1; //get delta
 	ret = idev->write(cmd, sizeof(cmd));
 	if (ret < 0) {
 		ipio_err("Failed to write 0xB7,0x1 command, %d\n", ret);
@@ -378,7 +378,7 @@ static ssize_t ilitek_proc_get_delta_data_read(struct file *pFile, char __user *
 		goto out;
 	}
 
-	cmd[1] = 0x03;
+	cmd[1] = 0x03; //switch to normal mode
 	ret = idev->write(cmd, sizeof(cmd));
 	if (ret < 0) {
 		ipio_err("Failed to write 0xB7,0x3 command, %d\n", ret);
@@ -395,7 +395,7 @@ static ssize_t ilitek_proc_get_delta_data_read(struct file *pFile, char __user *
 		"Header 0x%x ,Type %d, Length %d\n", data[0], data[1], (data[2] << 8) | data[3]);
 	ipio_info("Header 0x%x ,Type %d, Length %d\n", data[0], data[1], (data[2] << 8) | data[3]);
 
-
+	// print delta data
 	for (y = 0; y < row; y++) {
 		size += snprintf(g_user_buf + size, PAGE_SIZE - size, "[%2d] ", (y+1));
 		ipio_info("[%2d] ", (y+1));
@@ -462,7 +462,7 @@ static ssize_t ilitek_proc_fw_get_raw_data_read(struct file *pFile, char __user 
 	}
 
 	cmd[0] = 0xB7;
-	cmd[1] = 0x2;
+	cmd[1] = 0x2; //get rawdata
 	ret = idev->write(cmd, sizeof(cmd));
 	if (ret < 0) {
 		ipio_err("Failed to write 0xB7,0x2 command, %d\n", ret);
@@ -478,7 +478,7 @@ static ssize_t ilitek_proc_fw_get_raw_data_read(struct file *pFile, char __user 
 		goto out;
 	}
 
-	cmd[1] = 0x03;
+	cmd[1] = 0x03; //switch to normal mode
 	ret = idev->write(cmd, sizeof(cmd));
 	if (ret < 0) {
 		ipio_err("Failed to write 0xB7,0x3 command, %d\n", ret);
@@ -495,7 +495,7 @@ static ssize_t ilitek_proc_fw_get_raw_data_read(struct file *pFile, char __user 
 			"Header 0x%x ,Type %d, Length %d\n", data[0], data[1], (data[2] << 8) | data[3]);
 	ipio_info("Header 0x%x ,Type %d, Length %d\n", data[0], data[1], (data[2] << 8) | data[3]);
 
-
+	// print raw data
 	for (y = 0; y < row; y++) {
 		size += snprintf(g_user_buf + size, PAGE_SIZE - size, "[%2d] ", (y+1));
 		ipio_info("[%2d] ", (y+1));
@@ -956,7 +956,7 @@ static ssize_t ilitek_proc_android_touch_mptest_read(struct file *filp, char __u
 					idev->mp_test_result[DOZE_PEAK_TO_PEAK],
 					idev->mp_test_result[OPEN_TEST_C]);
 
-
+	//size = snprintf(g_user_buf, sizeof(g_user_buf), "0P-1P-2P-3P-4P\n");
 	*pos += size;
 
 	ret = copy_to_user((u32 *) buff, g_user_buf, size);
@@ -1266,10 +1266,10 @@ static ssize_t ilitek_node_ioctl_write(struct file *filp, const char *buff, size
 		tp_mode = P5_X_FW_DEMO_MODE;
 		ilitek_tddi_switch_mode(&tp_mode);
 	} else if (strcmp(cmd, "dbgflag") == 0) {
-
+		//debug_mode_switch();
 		idev->debug_node_open = !idev->debug_node_open;
 		ipio_info("idev->debug_node_open = %d", idev->debug_node_open);
-
+		//ipio_info("debug flag message = %d\n", idev->debug_node_open);
 	} else if (strcmp(cmd, "iow") == 0) {
 		int w_len = 0;
 		w_len = data[1];

@@ -2,7 +2,7 @@
  * ILITEK Touch IC driver
  *
  * Copyright (C) 2011 ILI Technology Corporation.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * Author: Dicky Chiang <dicky_chiang@ilitek.com>
  *
@@ -839,7 +839,7 @@ static int ilitek_tddi_fw_iram_upgrade(u8 *pfw)
 
 			if (crc != dma) {
 				ipio_err("CRC Failed! \n");
-
+				//ilitek_tddi_fw_print_iram_data();
 				return UPDATE_FAIL;
 			}
 			idev->fw_update_stat = 90;

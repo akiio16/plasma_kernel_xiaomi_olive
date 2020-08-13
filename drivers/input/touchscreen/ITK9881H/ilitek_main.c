@@ -2,7 +2,7 @@
  * ILITEK Touch IC driver
  *
  * Copyright (C) 2011 ILI Technology Corporation.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * Author: Dicky Chiang <dicky_chiang@ilitek.com>
  *
@@ -267,14 +267,14 @@ static void ilitek_tddi_wq_bat_check(struct work_struct *work)
 		|| strnstr(str, "Fully charged", 0) != NULL) {
 		if (charge_mode != 1) {
 			ipio_debug("Charging mode\n");
-			if (ilitek_tddi_ic_func_ctrl("plug", DISABLE) < 0)
+			if (ilitek_tddi_ic_func_ctrl("plug", DISABLE) < 0) // plug in
 				ipio_err("Write plug in failed\n");
 			charge_mode = 1;
 		}
 	} else {
 		if (charge_mode != 2) {
 			ipio_debug("Not charging mode\n");
-			if (ilitek_tddi_ic_func_ctrl("plug", ENABLE) < 0)
+			if (ilitek_tddi_ic_func_ctrl("plug", ENABLE) < 0) // plug out
 				ipio_err("Write plug out failed\n");
 			charge_mode = 2;
 		}
