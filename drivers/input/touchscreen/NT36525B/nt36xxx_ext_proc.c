@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2010 - 2018 Novatek, Inc.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * $Revision: 43184 $
  * $Date: 2019-04-11 11:37:11 +0800 (週四, 11 四月 2019) $
@@ -63,15 +63,15 @@ static struct proc_dir_entry *NVT_proc_edge_reject_switch_entry;
 static struct proc_dir_entry *NVT_proc_pocket_palm_switch_entry;
 
 
-
+// Xiaomi Config Info.
 static uint8_t nvt_xiaomi_conf_info_fw_ver ;
 static uint8_t nvt_xiaomi_conf_info_fae_id  ;
 static uint64_t nvt_xiaomi_conf_info_reservation ;
 
 
-
-
-
+//static uint8_t nvt_xiaomi_conf_info_fw_ver = 0;
+//static uint8_t nvt_xiaomi_conf_info_fae_id = 0;
+//static uint64_t nvt_xiaomi_conf_info_reservation = 0;
 
 
 
@@ -86,10 +86,10 @@ void nvt_change_mode(uint8_t mode)
 {
 	uint8_t buf[8] = {0};
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	nvt_set_page(ts->mmap->EVENT_BUF_ADDR | EVENT_MAP_HOST_CMD);
 
-
+	//---set mode---
 	buf[0] = EVENT_MAP_HOST_CMD;
 	buf[1] = mode;
 	CTP_SPI_WRITE(ts->client, buf, 2);
@@ -113,15 +113,15 @@ uint8_t nvt_get_fw_pipe(void)
 {
 	uint8_t buf[8] = {0};
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	nvt_set_page(ts->mmap->EVENT_BUF_ADDR | EVENT_MAP_HANDSHAKING_or_SUB_CMD_BYTE);
 
-
+	//---read fw status---
 	buf[0] = EVENT_MAP_HANDSHAKING_or_SUB_CMD_BYTE;
 	buf[1] = 0x00;
 	CTP_SPI_READ(ts->client, buf, 2);
 
-
+	//NVT_LOG("FW pipe=%d, buf[1]=0x%02X\n", (buf[1]&0x01), buf[1]);
 
 	return (buf[1] & 0x01);
 }
@@ -144,74 +144,74 @@ void nvt_read_mdata(uint32_t xdata_addr, uint32_t xdata_btn_addr)
 	int32_t data_len = 0;
 	int32_t residual_len = 0;
 
-
+	//---set xdata sector address & length---
 	head_addr = xdata_addr - (xdata_addr % XDATA_SECTOR_SIZE);
 	dummy_len = xdata_addr - head_addr;
 	data_len = ts->x_num * ts->y_num * 2;
 	residual_len = (head_addr + dummy_len + data_len) % XDATA_SECTOR_SIZE;
 
+	//printk("head_addr=0x%05X, dummy_len=0x%05X, data_len=0x%05X, residual_len=0x%05X\n", head_addr, dummy_len, data_len, residual_len);
 
-
-
+	//read xdata : step 1
 	for (i = 0; i < ((dummy_len + data_len) / XDATA_SECTOR_SIZE); i++) {
-
+		//---read xdata by SPI_TANSFER_LENGTH
 		for (j = 0; j < (XDATA_SECTOR_SIZE / SPI_TANSFER_LENGTH); j++) {
-
+			//---change xdata index---
 			nvt_set_page(head_addr + (XDATA_SECTOR_SIZE * i) + (SPI_TANSFER_LENGTH * j));
 
-
+			//---read data---
 			buf[0] = SPI_TANSFER_LENGTH * j;
 			CTP_SPI_READ(ts->client, buf, SPI_TANSFER_LENGTH + 1);
 
-
+			//---copy buf to xdata_tmp---
 			for (k = 0; k < SPI_TANSFER_LENGTH; k++) {
 				xdata_tmp[XDATA_SECTOR_SIZE * i + SPI_TANSFER_LENGTH * j + k] = buf[k + 1];
-
+				//printk("0x%02X, 0x%04X\n", buf[k+1], (XDATA_SECTOR_SIZE*i + SPI_TANSFER_LENGTH*j + k));
 			}
 		}
-
+		//printk("addr=0x%05X\n", (head_addr+XDATA_SECTOR_SIZE*i));
 	}
 
-
+	//read xdata : step2
 	if (residual_len != 0) {
-
+		//---read xdata by SPI_TANSFER_LENGTH
 		for (j = 0; j < (residual_len / SPI_TANSFER_LENGTH + 1); j++) {
-
+			//---change xdata index---
 			nvt_set_page(xdata_addr + data_len - residual_len + (SPI_TANSFER_LENGTH * j));
 
-
+			//---read data---
 			buf[0] = SPI_TANSFER_LENGTH * j;
 			CTP_SPI_READ(ts->client, buf, SPI_TANSFER_LENGTH + 1);
 
-
+			//---copy buf to xdata_tmp---
 			for (k = 0; k < SPI_TANSFER_LENGTH; k++) {
 				xdata_tmp[(dummy_len + data_len - residual_len) + SPI_TANSFER_LENGTH * j + k] = buf[k + 1];
-
+				//printk("0x%02X, 0x%04x\n", buf[k+1], ((dummy_len+data_len-residual_len) + SPI_TANSFER_LENGTH*j + k));
 			}
 		}
-
+		//printk("addr=0x%05X\n", (xdata_addr+data_len-residual_len));
 	}
 
-
+	//---remove dummy data and 2bytes-to-1data---
 	for (i = 0; i < (data_len / 2); i++) {
 		xdata[i] = (int16_t)(xdata_tmp[dummy_len + i * 2] + 256 * xdata_tmp[dummy_len + i * 2 + 1]);
 	}
 
 #if TOUCH_KEY_NUM > 0
-
-
+	//read button xdata : step3
+	//---change xdata index---
 	nvt_set_page(xdata_btn_addr);
-
+	//---read data---
 	buf[0] = (xdata_btn_addr & 0xFF);
 	CTP_SPI_READ(ts->client, buf, (TOUCH_KEY_NUM * 2 + 1));
 
-
+	//---2bytes-to-1data---
 	for (i = 0; i < TOUCH_KEY_NUM; i++) {
 		xdata[ts->x_num * ts->y_num + i] = (int16_t)(buf[1 + i * 2] + 256 * buf[1 + i * 2 + 1]);
 	}
 #endif
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	nvt_set_page(ts->mmap->EVENT_BUF_ADDR);
 }
 
@@ -564,7 +564,7 @@ static int32_t nvt_xiaomi_config_info_open(struct inode *inode, struct file *fil
 	nvt_esd_check_enable(false);
 #endif /* #if NVT_TOUCH_ESD_PROTECT */
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	nvt_set_page(ts->mmap->EVENT_BUF_ADDR | 0x9C);
 
 	buf[0] = 0x9C;
@@ -599,7 +599,7 @@ int32_t nvt_set_pf_switch(uint8_t pf_switch)
 
 	msleep(35);
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	ret = nvt_set_page(ts->mmap->EVENT_BUF_ADDR | EVENT_MAP_HOST_CMD);
 	if (ret < 0) {
 		NVT_ERR("Set event buffer index fail!\n");
@@ -629,7 +629,7 @@ int32_t nvt_get_pf_switch(uint8_t *pf_switch)
 
 	msleep(35);
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	ret = nvt_set_page(ts->mmap->EVENT_BUF_ADDR | 0x5D);
 	if (ret < 0) {
 		NVT_ERR("Set event buffer index fail!\n");
@@ -775,7 +775,7 @@ int32_t nvt_set_sensitivity_switch(uint8_t sensitivity_switch)
 
 	msleep(35);
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	ret = nvt_set_page(ts->mmap->EVENT_BUF_ADDR | EVENT_MAP_HOST_CMD);
 	if (ret < 0) {
 		NVT_ERR("Set event buffer index fail!\n");
@@ -805,7 +805,7 @@ int32_t nvt_get_sensitivity_switch(uint8_t *sensitivity_switch)
 
 	msleep(35);
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	ret = nvt_set_page(ts->mmap->EVENT_BUF_ADDR | 0x5D);
 	if (ret < 0) {
 		NVT_ERR("Set event buffer index fail!\n");
@@ -951,7 +951,7 @@ int32_t nvt_set_er_range_switch(uint8_t er_range_switch)
 
 	msleep(35);
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	ret = nvt_set_page(ts->mmap->EVENT_BUF_ADDR | EVENT_MAP_HOST_CMD);
 	if (ret < 0) {
 		NVT_ERR("Set event buffer index fail!\n");
@@ -981,7 +981,7 @@ int32_t nvt_get_er_range_switch(uint8_t *er_range_switch)
 
 	msleep(35);
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	ret = nvt_set_page(ts->mmap->EVENT_BUF_ADDR | 0x5D);
 	if (ret < 0) {
 		NVT_ERR("Set event buffer index fail!\n");
@@ -1127,7 +1127,7 @@ int32_t nvt_set_edge_reject_switch(uint8_t edge_reject_switch)
 
 	msleep(35);
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	ret = nvt_set_page(ts->mmap->EVENT_BUF_ADDR | EVENT_MAP_HOST_CMD);
 	if (ret < 0) {
 		NVT_ERR("Set event buffer index fail!\n");
@@ -1136,13 +1136,13 @@ int32_t nvt_set_edge_reject_switch(uint8_t edge_reject_switch)
 
 	buf[0] = EVENT_MAP_HOST_CMD;
 	if (edge_reject_switch == 1) {
-
+		// vertical
 		buf[1] = 0xBA;
 	} else if (edge_reject_switch == 2) {
-
+		// left up
 		buf[1] = 0xBB;
 	} else if (edge_reject_switch == 3) {
-
+		// righ up
 		buf[1] = 0xBC;
 	} else {
 		NVT_ERR("Invalid value! edge_reject_switch = %d\n", edge_reject_switch);
@@ -1169,7 +1169,7 @@ int32_t nvt_get_edge_reject_switch(uint8_t *edge_reject_switch)
 
 	msleep(35);
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	ret = nvt_set_page(ts->mmap->EVENT_BUF_ADDR | 0x5C);
 	if (ret < 0) {
 		NVT_ERR("Set event buffer index fail!\n");
@@ -1317,7 +1317,7 @@ int32_t nvt_set_pocket_palm_switch(uint8_t pocket_palm_switch)
 
 	msleep(35);
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	ret = nvt_set_page(ts->mmap->EVENT_BUF_ADDR | EVENT_MAP_HOST_CMD);
 	if (ret < 0) {
 		NVT_ERR("Set event buffer index fail!\n");
@@ -1326,10 +1326,10 @@ int32_t nvt_set_pocket_palm_switch(uint8_t pocket_palm_switch)
 
 	buf[0] = EVENT_MAP_HOST_CMD;
 	if (pocket_palm_switch == 0) {
-
+		// pocket palm disable
 		buf[1] = 0x74;
 	} else if (pocket_palm_switch == 1) {
-
+		// pocket palm enable
 		buf[1] = 0x73;
 	} else {
 		NVT_ERR("Invalid value! pocket_palm_switch = %d\n", pocket_palm_switch);
@@ -1356,7 +1356,7 @@ int32_t nvt_get_pocket_palm_switch(uint8_t *pocket_palm_switch)
 
 	msleep(35);
 
-
+	//---set xdata index to EVENT BUF ADDR---
 	ret = nvt_set_page(ts->mmap->EVENT_BUF_ADDR | 0x5D);
 	if (ret < 0) {
 		NVT_ERR("Set event buffer index fail!\n");

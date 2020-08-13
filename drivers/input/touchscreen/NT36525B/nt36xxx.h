@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2010 - 2018 Novatek, Inc.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * $Revision: 43542 $
  * $Date: 2019-04-19 09:59:04 +0800 (週五, 19 四月 2019) $
@@ -43,18 +43,18 @@
 
 #define NVT_DEBUG 1
 
-
+//---GPIO number---
 #define NVTTOUCH_RST_PIN 980
 #define NVTTOUCH_INT_PIN 943
 
 
-
-
-
+//---INT trigger mode---
+//#define IRQ_TYPE_EDGE_RISING 1
+//#define IRQ_TYPE_EDGE_FALLING 2
 #define INT_TRIGGER_TYPE IRQ_TYPE_EDGE_RISING
 
 
-
+//---SPI driver info.---
 #define NVT_SPI_NAME "NVT-ts"
 
 #if NVT_DEBUG
@@ -64,12 +64,12 @@
 #endif
 #define NVT_ERR(fmt, args...)    pr_err("[%s] %s %d: " fmt, NVT_SPI_NAME, __func__, __LINE__, ##args)
 
-
+//---Input device info.---
 #define NVT_TS_NAME "NVTCapacitiveTouchScreen"
 
 #define NVT_VENDOR_INFO                             "[Vendor]Truly(TP) + Truly(LCD), [TP-IC]NT36525B, [FW]Ver "
 
-
+//---Touch info.---
 #define TOUCH_DEFAULT_MAX_WIDTH 720
 #define TOUCH_DEFAULT_MAX_HEIGHT 1520
 #define TOUCH_MAX_FINGER_NUM 10
@@ -82,7 +82,7 @@ extern const uint16_t touch_key_array[TOUCH_KEY_NUM];
 /* Enable only when module have tp reset pin and connected to host */
 #define NVT_TOUCH_SUPPORT_HW_RST 0
 
-
+//---Customerized func.---
 #define NVT_TOUCH_PROC 1
 #define NVT_TOUCH_EXT_PROC 1
 #define NVT_TOUCH_MP 1
@@ -97,7 +97,7 @@ extern const uint16_t gesture_key_array[];
 #define BOOT_UPDATE_FIRMWARE_NAME "novatek_ts_fw.bin"
 #define MP_UPDATE_FIRMWARE_NAME   "novatek_ts_mp.bin"
 
-
+//---ESD Protect.---
 #define NVT_TOUCH_ESD_PROTECT 0
 #define NVT_TOUCH_ESD_CHECK_PERIOD 1500	/* ms */
 #define NVT_TOUCH_WDT_RECOVERY 1
@@ -156,10 +156,10 @@ struct nvt_flash_data{
 #endif
 
 typedef enum {
-	RESET_STATE_INIT = 0xA0,
-	RESET_STATE_REK,
-	RESET_STATE_REK_FINISH,
-	RESET_STATE_NORMAL_RUN,
+	RESET_STATE_INIT = 0xA0,// IC reset
+	RESET_STATE_REK,		// ReK baseline
+	RESET_STATE_REK_FINISH,	// baseline is ready
+	RESET_STATE_NORMAL_RUN,	// normal run
 	RESET_STATE_MAX  = 0xAF
 } RST_COMPLETE_STATE;
 
@@ -171,7 +171,7 @@ typedef enum {
     EVENT_MAP_PROJECTID                     = 0x9A,
 } SPI_EVENT_MAP;
 
-
+//---SPI READ/WRITE---
 #define SPI_WRITE_MASK(a)	(a | 0x80)
 #define SPI_READ_MASK(a)	(a & 0x7F)
 
@@ -183,11 +183,11 @@ typedef enum {
 	NVTREAD  = 1
 } NVT_SPI_RW;
 
-
+//---extern structures---
 extern struct nvt_ts_data *ts;
 extern char *saved_command_line;
 
-
+//---extern functions---
 int32_t CTP_SPI_READ(struct spi_device *client, uint8_t *buf, uint16_t len);
 int32_t CTP_SPI_WRITE(struct spi_device *client, uint8_t *buf, uint16_t len);
 void nvt_bootloader_reset(void);
