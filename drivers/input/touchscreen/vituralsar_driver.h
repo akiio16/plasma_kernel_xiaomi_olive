@@ -22,16 +22,16 @@ extern "C" {
 /*******************************************************************************
  * Platform-specific configuration data
  ******************************************************************************/
-#define VITURALSAR_I2C_DRIVER_NAME			"virtualsar"
-#define VIRTUAL_I2C_DEVICETREE_NAME		"virtualsar,sar"
-
+#define VITURALSAR_I2C_DRIVER_NAME			"virtualsar"				// Length must be less than I2C_NAME_SIZE (currently 20, see include/linux/mod_devicetable.h)
+#define VIRTUAL_I2C_DEVICETREE_NAME		"virtualsar,sar"	// Must match device tree .compatible string exactly
+				// If no block reads/writes, try single reads/block writes
 
 /*******************************************************************************
 * Driver structs
 ******************************************************************************/
-#ifdef CONFIG_OF
-static const struct of_device_id virtualsar_dt_match[] = {
-	{ .compatible = VIRTUAL_I2C_DEVICETREE_NAME },
+#ifdef CONFIG_OF		// Defined by the build system when configuring "open firmware" (OF) aka device-tree
+static const struct of_device_id virtualsar_dt_match[] = {				// Used by kernel to match device-tree entry to driver
+	{ .compatible = VIRTUAL_I2C_DEVICETREE_NAME },				// String must match device-tree node exactly
 	{},
 };
 MODULE_DEVICE_TABLE(of, virtualsar_dt_match);
@@ -42,7 +42,7 @@ static const struct i2c_device_id virtualsar_i2c_device_id[] = {
 	{ VIRTUAL_I2C_DEVICETREE_NAME, 0 },
 	{}
 };
-MODULE_DEVICE_TABLE(i2c, virtualsar_i2c_device_id);
+MODULE_DEVICE_TABLE(i2c, virtualsar_i2c_device_id);		// Used to generate map files used by depmod for module dependencies
 
 #define SAR_INT_TRIGGER    2
 #define SAR_IRQ_TAB                     {IRQ_TYPE_EDGE_RISING, IRQ_TYPE_EDGE_FALLING, IRQ_TYPE_EDGE_BOTH, IRQ_TYPE_LEVEL_LOW, IRQ_TYPE_LEVEL_HIGH}
@@ -61,7 +61,7 @@ struct vituralsar_data {
 struct gpio_keys_button gpio_key = {
 	.code              = KEY_F24,
 	.type              = EV_KEY,
-	.wakeup            = 1,
+	.wakeup            = 1,   //change to 1 for wake up
 	.debounce_interval = 0,
 	.can_disable       = true,
 };
@@ -70,9 +70,9 @@ static unsigned int irq;
 /*******************************************************************************
  * Driver module functions
  ******************************************************************************/
-static int __init virtualsar_init(void);
-static void __exit virtualsar_exit(void);
-static int virtualsar_probe(struct i2c_client *client,
+static int __init virtualsar_init(void);		// Called when driver is inserted into the kernel
+static void __exit virtualsar_exit(void);		// Called when driver is removed from the kernel
+static int virtualsar_probe(struct i2c_client *client,			// Called when the associated device is added
 		const struct i2c_device_id *id);
 static int virtualsar_suspend(struct device *dev);
 static int virtualsar_resume(struct device *dev);
@@ -81,12 +81,12 @@ static SIMPLE_DEV_PM_OPS(virtualsar_pm_ops, virtualsar_suspend, virtualsar_resum
 /* Defines our driver's name, device-tree match, and required driver callbacks */
 static struct i2c_driver virtualsar_driver = {
 	.driver = {
-		.name = VIRTUAL_I2C_DEVICETREE_NAME,
+		.name = VIRTUAL_I2C_DEVICETREE_NAME,		// Must match our id_table name
 		.pm = &virtualsar_pm_ops,
-		.of_match_table = of_match_ptr(virtualsar_dt_match),
+		.of_match_table = of_match_ptr(virtualsar_dt_match),			// Device-tree match structure to pair the DT device with our driver
 	},
-	.probe = virtualsar_probe,
-	.id_table = virtualsar_i2c_device_id,
+	.probe = virtualsar_probe,			// Called on device add, inits/starts driver
+	.id_table = virtualsar_i2c_device_id,		// I2C id structure to associate with our driver
 };
 
 #endif	/* FUSB30X_DRIVER_H */

@@ -8,14 +8,14 @@
 #define DEBUG
 
 /* Standard Linux includes */
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/i2c.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/of_device.h>
+#include <linux/init.h>				// __init, __initdata, etc
+#include <linux/module.h>			// Needed to be a module
+#include <linux/kernel.h>			// Needed to be a kernel module
+#include <linux/i2c.h>				// I2C functionality
+#include <linux/slab.h>				// devm_kzalloc
+#include <linux/types.h>			// Kernel datatypes
+#include <linux/errno.h>			// EINVAL, ERANGE, etc
+#include <linux/of_device.h>			// Device tree functionality
 #include <linux/interrupt.h>
 #include "vituralsar_driver.h"
 #include <linux/regulator/consumer.h>
@@ -52,7 +52,7 @@ static irqreturn_t sar_irq_handler(int irq, void *dev_id)
 
 
 	spin_lock_irqsave(&sdata->irq_lock, irqflags);
-
+	//sar_irq_disable(sdata);
 	input_data = gpio_get_value(sar_int_gpio);
 
 
@@ -62,7 +62,7 @@ static irqreturn_t sar_irq_handler(int irq, void *dev_id)
 	input_sync(sdata->input_dev);
 
 	spin_unlock_irqrestore(&sdata->irq_lock, irqflags);
-
+	//sar_irq_enable(sdata);
 
 	printk("gpio_get_value : %d\n", input_data);
 
@@ -126,7 +126,7 @@ static s8 sar_request_input_dev(struct vituralsar_data *sdata)
 		return -ENODEV;
 	}
 	input_set_capability(sdata->input_dev, EV_KEY, gpio_key.code);
-
+	//input_set_abs_params(sdata->input_dev, ABS_MT_POSITION_X, 0, sdata->abs_x_max, 0, 0);
 
 	return 0;
 }
@@ -182,7 +182,7 @@ static int virtualsar_resume(struct device *dev)
 static int virtualsar_probe (struct i2c_client *client, const struct i2c_device_id *id)
 {
 	int ret = 0;
-	struct vituralsar_data *sdata;
+	struct vituralsar_data *sdata;//fusb30x_chip* chip;
 
 	if (!client) {
 		pr_err("SAR  %s - Error: Client structure is NULL!\n", __func__);
@@ -202,19 +202,19 @@ static int virtualsar_probe (struct i2c_client *client, const struct i2c_device_
 		printk("Alloc GFP_KERNEL memory failed.");
 		return -ENOMEM;
 	}
-
+	//parse dt for irq
 	if (client->dev.of_node) {
 		ret = sar_parse_dt(&client->dev);
 		if (!ret)
 			printk("sar_parse_dt success\n");
 	}
-
+	//set irq Trigger mode
 	sdata->int_trigger_type = SAR_INT_TRIGGER;
 
 	sdata->client = client;
 	spin_lock_init(&sdata->irq_lock);
 
-
+	//request io port
 	if (gpio_is_valid(sar_int_gpio)) {
 		ret = sar_request_io_port(sdata);
 		if (ret < 0) {
@@ -226,13 +226,13 @@ static int virtualsar_probe (struct i2c_client *client, const struct i2c_device_
 		return -ENOMEM;
 	}
 
-
+	//request input dev
 	ret = sar_request_input_dev(sdata);
 	if (ret < 0) {
 		printk("SAR request input dev failed");
 	}
 
-
+	//request irq
 	ret = sar_request_irq(sdata);
 	if (ret < 0) {
 		printk("SAR %s -request irq fail\n", __func__);
@@ -240,7 +240,7 @@ static int virtualsar_probe (struct i2c_client *client, const struct i2c_device_
 
 	__set_bit(EV_REP, sdata->input_dev->evbit);
 
-
+	//enable irq
 	printk("after sar_irq_enable,probe end \n");
 
 	gpio_status = proc_create(GOIP_STATUS, 0644, NULL, &gpio_status_ops);
@@ -272,13 +272,13 @@ static void __exit virtualsar_exit(void)
 /*******************************************************************************
  * Driver macros
  ******************************************************************************/
+//#if ADDED_BY_HQ_WWM
+//late_initcall(fusb30x_init);			// Defines the module's entrance function
+//#else
+module_init(virtualsar_init);			// Defines the module's entrance function
+//#endif
+module_exit(virtualsar_exit);			// Defines the module's exit function
 
-
-
-module_init(virtualsar_init);
-
-module_exit(virtualsar_exit);
-
-MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("VirtualSAR Driver");
-MODULE_AUTHOR("VirtualSar");
+MODULE_LICENSE("GPL");				// Exposed on call to modinfo
+MODULE_DESCRIPTION("VirtualSAR Driver");	// Exposed on call to modinfo
+MODULE_AUTHOR("VirtualSar");			// Exposed on call to modinfo
