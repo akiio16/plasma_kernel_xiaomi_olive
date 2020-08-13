@@ -1,5 +1,5 @@
 /* Copyright (c) 2013, The Linux Foundation. All rights reserved.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -172,8 +172,8 @@
 					29 01 00 00 00 00 02 4B 28
 					29 01 00 00 00 00 02 4C 9C
 					29 01 00 00 00 00 02 4D 00
-					29 01 00 00 00 00 02 53 01
-					29 01 00 00 00 00 02 54 01
+					29 01 00 00 00 00 02 53 00
+					29 01 00 00 00 00 02 54 00
 					29 01 00 00 00 00 02 55 00
 					29 01 00 00 00 00 02 56 76
 					29 01 00 00 00 00 02 68 76
@@ -183,6 +183,7 @@
 					29 01 00 00 00 00 02 45 0E
 					29 01 00 00 00 00 02 FF 10
 					29 01 00 00 00 00 02 FB 01
+					29 01 00 00 00 00 02 55 80
 					29 01 00 00 00 00 02 BA 03
 					29 01 00 00 00 00 03 51 0F FF
 					29 01 00 00 00 00 02 53 2C
@@ -198,32 +199,36 @@
 		qcom,mdss-dsi-CABC_UI_on-command = [
 					29 00 00 00 00 00 02 FF 10
 					29 00 00 00 00 00 02 FB 01
-					29 01 00 00 00 00 02 55 01
+					29 01 00 00 00 00 02 55 81
 					];
 		qcom,mdss-dsi-CABC_STILL_on-command = [
 					29 00 00 00 00 00 02 FF 10
 					29 00 00 00 00 00 02 FB 01
-					29 01 00 00 00 00 02 55 02
+					29 01 00 00 00 00 02 55 82
 					];
 		qcom,mdss-dsi-CABC_MOVIE_on-command = [
 					29 00 00 00 00 00 02 FF 10
 					29 00 00 00 00 00 02 FB 01
-					29 01 00 00 00 00 02 55 03
+					29 01 00 00 00 00 02 55 83
 					];
 		qcom,mdss-dsi-CABC_off-command = [
 					29 00 00 00 00 00 02 FF 10
 					29 00 00 00 00 00 02 FB 01
-					29 01 00 00 00 00 02 55 00
-					];
-		qcom,mdss-dsi-CE_on-command = [
-					29 00 00 00 00 00 02 FF 10
-					29 00 00 00 00 00 02 FB 01
 					29 01 00 00 00 00 02 55 80
 					];
-		qcom,mdss-dsi-CE_off-command = [
-					29 00 00 00 00 00 02 FF 10
+		qcom,mdss-dsi-CE_on-command = [
+					29 00 00 00 00 00 02 FF 22
 					29 00 00 00 00 00 02 FB 01
-					29 01 00 00 00 00 02 55 00
+					29 00 00 00 00 00 02 53 01
+					29 01 00 00 00 00 02 54 01
+					29 01 00 00 00 00 02 FF 10
+					];
+		qcom,mdss-dsi-CE_off-command = [
+					29 00 00 00 00 00 02 FF 22
+					29 00 00 00 00 00 02 FB 01
+					29 00 00 00 00 00 02 53 00
+					29 01 00 00 00 00 02 54 00
+					29 01 00 00 00 00 02 FF 10
 					];
 		qcom,mdss-dsi-on-command-state = "dsi_lp_mode";
 		qcom,mdss-dsi-off-command-state = "dsi_lp_mode";
