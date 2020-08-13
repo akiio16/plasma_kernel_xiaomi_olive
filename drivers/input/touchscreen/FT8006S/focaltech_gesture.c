@@ -3,7 +3,7 @@
  * FocalTech TouchScreen driver.
  *
  * Copyright (c) 2012-2019, Focaltech Ltd. All rights reserved.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -67,6 +67,9 @@
 #define GESTURE_V                               0x54
 #define GESTURE_Z                               0x41
 #define GESTURE_C                               0x34
+
+#define WAKEUP_OFF                              0x04
+#define WAKEUP_ON                               0x05
 
 /*****************************************************************************
 * Private enumerations, structures and unions using typedef
@@ -229,7 +232,7 @@ static void fts_gesture_report(struct input_dev *input_dev, int gesture_id)
 		gesture = KEY_GESTURE_DOWN;
 		break;
 	case GESTURE_DOUBLECLICK:
-		gesture = KEY_GESTURE_U;
+		gesture = KEY_WAKEUP;
 		break;
 	case GESTURE_O:
 		gesture = KEY_GESTURE_O;
@@ -328,7 +331,6 @@ int fts_gesture_readdata(struct fts_ts_data *ts_data, u8 *data)
 		gesture->coordinate_y[i] = (u16) (((buf[2 + index] & 0x0F) << 8)
 						  + buf[3 + index]);
 	}
-
 	/* report gesture to OS */
 	fts_gesture_report(input_dev, gesture->gesture_id);
 	return 0;
@@ -407,12 +409,33 @@ int fts_gesture_resume(struct fts_ts_data *ts_data)
 	return 0;
 }
 
+bool fts_gesture_flag;
+
+int fts_gesture_switch(struct input_dev *dev, unsigned int type, unsigned int code, int value)
+{
+	struct fts_ts_data *ts_data = fts_data;
+	FTS_FUNC_ENTER();
+	if (type == EV_SYN && code == SYN_CONFIG) {
+		if (value == WAKEUP_OFF) {
+			ts_data->gesture_mode = DISABLE;
+			fts_gesture_flag = false;
+			FTS_INFO("gesture disabled:%d", fts_gesture_flag);
+		} else if (value == WAKEUP_ON) {
+			ts_data->gesture_mode = ENABLE;
+			fts_gesture_flag = true;
+			FTS_INFO("fts_gesture_flag:%d", fts_gesture_flag);
+		}
+	}
+	FTS_FUNC_EXIT();
+	return 0;
+}
+
 int fts_gesture_init(struct fts_ts_data *ts_data)
 {
 	struct input_dev *input_dev = ts_data->input_dev;
 
 	FTS_FUNC_ENTER();
-	input_set_capability(input_dev, EV_KEY, KEY_POWER);
+	input_set_capability(input_dev, EV_KEY, KEY_WAKEUP);
 	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_U);
 	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_UP);
 	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_DOWN);
@@ -443,10 +466,11 @@ int fts_gesture_init(struct fts_ts_data *ts_data)
 	__set_bit(KEY_GESTURE_C, input_dev->keybit);
 	__set_bit(KEY_GESTURE_Z, input_dev->keybit);
 
+	input_dev->event = fts_gesture_switch;
 	fts_create_gesture_sysfs(ts_data->dev);
 
 	memset(&fts_gesture_data, 0, sizeof(struct fts_gesture_st));
-	ts_data->gesture_mode = FTS_GESTURE_EN;
+	ts_data->gesture_mode = DISABLE;
 
 	FTS_FUNC_EXIT();
 	return 0;

@@ -3,7 +3,7 @@
  * FocalTech TouchScreen driver.
  *
  * Copyright (c) 2012-2019, Focaltech Ltd. All rights reserved.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -1231,3 +1231,58 @@ int fts_remove_sysfs(struct fts_ts_data *ts_data)
 	sysfs_remove_group(&ts_data->dev->kobj, &fts_attribute_group);
 	return 0;
 }
+
+static struct proc_dir_entry *focal_proc_create_tp_lock_down;
+#if FOCAL_LOCKDOWN
+
+#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
+extern char tp_lockdown_info[40];
+#endif
+
+static int focal_tp_lock_down_info_show(struct seq_file *m, void *data)
+{
+
+#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
+	FTS_INFO("focal_tp_lock_down_info_show:%s\n", tp_lockdown_info);
+	seq_printf(m, "%s\n", tp_lockdown_info);
+#else
+	FTS_ERROR("get tp_lockdown_info from LCM fail !");
+	seq_printf(m, "41373201c3493100\n");
+#endif
+	return 0;
+}
+
+static int focal_tp_lock_down_info_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, focal_tp_lock_down_info_show, inode->i_private);
+}
+
+static const struct file_operations proc_tp_lock_down_info_fops = {
+	.owner = THIS_MODULE,
+	.open = focal_tp_lock_down_info_open,
+	.read = seq_read,
+};
+
+int focal_proc_tp_lockdown_info(void)
+{
+	focal_proc_create_tp_lock_down = proc_create("tp_lockdown_info", 0644, NULL, &proc_tp_lock_down_info_fops);
+	if (!focal_proc_create_tp_lock_down) {
+		FTS_ERROR("Failed to create focal_tp_lockdown_info\n");
+		return -EINVAL;
+	} else {
+		FTS_INFO("Sucess to creat focal_tp_lockdown_info /proc");
+		return 0;
+	}
+	return 0;
+}
+
+void focal_lockdown_proc_deinit(void)
+{
+	if (focal_proc_create_tp_lock_down != NULL) {
+		remove_proc_entry("tp_lockdown_info", NULL);
+		focal_proc_create_tp_lock_down = NULL;
+		FTS_INFO("Removed /proc/%s\n", "tp_lockdown_info");
+	}
+}
+
+#endif

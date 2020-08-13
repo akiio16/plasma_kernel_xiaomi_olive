@@ -1,6 +1,6 @@
 /************************************************************************
 * Copyright (C) 2012-2019, Focaltech Systems (R)£¬All Rights Reserved.
-* Copyright (C) 2019 XiaoMi, Inc.
+* Copyright (C) 2020 XiaoMi, Inc.
 *
 * File Name: focaltech_test.h
 *
@@ -23,8 +23,8 @@
 #include <linux/slab.h>
 #include <linux/debugfs.h>
 #include <asm/uaccess.h>
-#include <linux/i2c.h>
-#include <linux/delay.h>
+#include <linux/i2c.h>//iic
+#include <linux/delay.h>//msleep
 #include <linux/string.h>
 #include <asm/unistd.h>
 #include <linux/vmalloc.h>
@@ -35,7 +35,7 @@
 /*****************************************************************************
 * Macro definitions using #define
 *****************************************************************************/
-#define ITO_TEST_NORMALIZED_NODE
+#define ITO_TEST_NORMALIZED_NODE        //HQ_BD2 ITO Test 0R-1R-2R-3R-4R??
 #ifdef ITO_TEST_NORMALIZED_NODE
 #define FTS_ANDROID_TOUCH		"android_touch"
 #define FTS_ITO_TEST			"self_test"
@@ -582,6 +582,11 @@ void *fts_malloc(size_t size);
 void fts_free_proc(void *p);
 void fts_test_save_data(char *name, int code, int *data, int datacnt,
 			bool mc_sc, bool key, bool result);
+
+bool start_selftest(int tmp);
+
+int fts_tp_differ_proc(void); //FTS_GET_TP_DIFFER
+#define FTS_GET_TP_DIFFER                       //获取tp 实时differ
 
 #define fts_malloc_r(p, size) do {\
 if (NULL == p) {\

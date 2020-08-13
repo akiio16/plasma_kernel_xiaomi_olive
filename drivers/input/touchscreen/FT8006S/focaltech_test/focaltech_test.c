@@ -3,7 +3,7 @@
  * FocalTech TouchScreen driver.
  *
  * Copyright (c) 2012-2019, FocalTech Systems, Ltd., all rights reserved.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -52,7 +52,7 @@ struct test_funcs *test_func_list[] = {
 static struct proc_dir_entry *fts_ito_test_proc;
 static struct proc_dir_entry *fts_android_touch_proc;
 static bool ito_test_result;
-
+//static u8 self_test_result = TP_SELFTEST_RESULT_INVALID;
 static u8 ito_test_status;
 #endif
 
@@ -1197,7 +1197,7 @@ static int fts_test_save_data_csv(struct fts_test *tdata)
 	int csv_item_count = 0;
 	struct fts_test_data *td = &tdata->testdata;
 	struct item_info *info = NULL;
-	int ret = 0;
+	int ret = 0;//ITO_TEST_NORMALIZED_NODE
 
 	FTS_TEST_INFO("save data in csv format");
 	csv_buffer = vmalloc(CSV_BUFFER_LEN);
@@ -1209,7 +1209,7 @@ static int fts_test_save_data_csv(struct fts_test *tdata)
 	line2_buffer = vmalloc(CSV_LINE2_BUFFER_LEN);
 	if (!line2_buffer) {
 		FTS_TEST_ERROR("line2_buffer malloc fail\n");
-		ret = -EIO;
+		ret = -EIO;//ITO_TEST_NORMALIZED_NODE
 		goto csv_save_err;
 	}
 
@@ -1279,7 +1279,7 @@ static int fts_test_save_data_csv(struct fts_test *tdata)
 		info = &td->info[i];
 		if (!info->data) {
 			FTS_TEST_ERROR("test item data is null");
-			ret = -EIO;
+			ret = -EIO;//ITO_TEST_NORMALIZED_NODE
 			goto csv_save_err;
 		}
 
@@ -1341,7 +1341,7 @@ csv_save_err:
 static int fts_test_save_result_txt(struct fts_test *tdata)
 {
 #if TXT_SUPPORT
-	int ret = 0;
+	int ret = 0;//ITO_TEST_NORMALIZED_NODE
 	if (!tdata || !tdata->testresult) {
 		FTS_TEST_ERROR("test result is null");
 		return -EIO;
@@ -1853,12 +1853,12 @@ static int fts_test_main_init(void)
 static int fts_test_main_exit(void)
 {
 	struct fts_test *tdata = fts_ftest;
-	int ret = 0;
+	int ret = 0;//ITO_TEST_NORMALIZED_NODE
 
 	FTS_TEST_FUNC_ENTER();
 	ret = fts_test_save_data_csv(tdata);
 	ret = fts_test_save_result_txt(tdata);
-	if (ret == 0)
+	if (ret == 0)//ITO_TEST_NORMALIZED_NODE
 		ito_test_status = 3;
 
 	/* free memory */
@@ -1871,7 +1871,7 @@ static int fts_test_main_exit(void)
 	/*free test data buffer*/
 	fts_free(tdata->buffer);
 
-	ito_test_status = 4;
+	ito_test_status = 4;//ITO_TEST_NORMALIZED_NODE
 	FTS_TEST_FUNC_EXIT();
 	return 0;
 }
@@ -1912,7 +1912,7 @@ static int fts_test_entry(char *ini_file_name)
 {
 	int ret = 0;
 
-	ito_test_status = 0;
+	ito_test_status = 0;//ITO_TEST_NORMALIZED_NODE
 	/* test initialize */
 	ret = fts_test_main_init();
 	if (ret < 0) {
@@ -1928,17 +1928,17 @@ static int fts_test_entry(char *ini_file_name)
 		goto test_err;
 	}
 
-	ito_test_status = 1;
+	ito_test_status = 1;//ITO_TEST_NORMALIZED_NODE
 	/* Start testing according to the test configuration */
 	if (true == fts_test_start()) {
 		FTS_TEST_SAVE_INFO("\n\n=======Tp test pass.\n");
-		ito_test_result = true;
+		ito_test_result = true;//ITO_TEST_NORMALIZED_NODE
 	} else {
 		FTS_TEST_SAVE_INFO("\n\n=======Tp test failure.\n");
-		ito_test_result = false;
+		ito_test_result = false;//ITO_TEST_NORMALIZED_NODE
 	}
 
-	ito_test_status = 2;
+	ito_test_status = 2;//ITO_TEST_NORMALIZED_NODE
 	ret = 0;
 test_err:
 	fts_test_main_exit();
@@ -1947,6 +1947,8 @@ test_err:
 }
 
 #ifdef ITO_TEST_NORMALIZED_NODE
+u8 FTS_IS_TESTING_FLAG;
+
 static ssize_t fts_ito_test_write(struct file *file, const char __user *buffer,
 	size_t count, loff_t *pos)
 {
@@ -1994,7 +1996,7 @@ mutex_lock(&input_dev->mutex);
 
 	fts_irq_enable();
 	mutex_unlock(&input_dev->mutex);
-
+	//fts_test_entry(fwname);
 
 	switch (ito_test_status) {
 	case 0:
@@ -2046,7 +2048,7 @@ mutex_lock(&input_dev->mutex);
 		break;
 	}
 
-
+	//I2C_Communication result
 	if ((fts_ftest->test_item[FTS_ENTER_FACTORY_MODE].testresult))
 		test_result_bmp[I2C_COMMUNICATION] = 'P';
 	else {
@@ -2054,26 +2056,26 @@ mutex_lock(&input_dev->mutex);
 		return 0;
 	}
 
-
+	//Rawdata result
 	if ((fts_ftest->test_item[FTS_RAWDATA_TEST].testresult)
 		&& (fts_ftest->test_item[FTS_CB_TEST].testresult))
 		test_result_bmp[RAWDATA] = 'P';
 	else
 		test_result_bmp[RAWDATA] = 'F';
 
-
+	//open test result
 	if (fts_ftest->test_item[FTS_OPEN_TEST].testresult)
 		test_result_bmp[OPEN_DATA] = 'P';
     else
 		test_result_bmp[OPEN_DATA] = 'F';
 
-
+	//short test result
 	if (fts_ftest->test_item[FTS_SHORT_CIRCUIT_TEST].testresult)
 		test_result_bmp[SHORT_DATA] = 'P';
 	else
 		test_result_bmp[SHORT_DATA] = 'F';
 
-
+	//other test result
 	test_result_bmp[OTHER_DATA] = 'P';
 
 	seq_printf(file, "0%c-1%c-2%c-3%c-4%c\n",
@@ -2083,7 +2085,7 @@ mutex_lock(&input_dev->mutex);
 		test_result_bmp[SHORT_DATA],
 		test_result_bmp[OTHER_DATA]);
 
-
+	//seq_printf(file, "0P-1P-2P-3P-4P\n");
 
 	FTS_TEST_FUNC_EXIT();
 
@@ -2213,6 +2215,14 @@ int fts_test_init(struct fts_ts_data *ts_data)
 	int ret = 0;
 
 	FTS_TEST_FUNC_ENTER();
+
+#ifdef FTS_GET_TP_DIFFER
+	ret = fts_tp_differ_proc();
+	if (ret) {
+		FTS_TEST_ERROR("[focal] %s() - ERROR: create fts_tp_differ proc()  failed.",  __func__);
+	}
+#endif
+
 	/* get test function, must be the first step */
 	ret = fts_test_func_init(ts_data);
 	if (ret < 0) {
@@ -2251,3 +2261,186 @@ int fts_test_exit(struct fts_ts_data *ts_data)
 	FTS_TEST_FUNC_EXIT();
 	return 0;
 }
+
+#if FTS_TP_SELFTEST
+#define TEST_OPEN 1
+#define TEST_SHORT 2
+
+static int my_test_result;
+static int my_test_type;
+
+bool fts_selftest_start(int temp)
+{
+	bool testresult = false;
+
+	FTS_TEST_FUNC_ENTER();
+
+	testresult = start_selftest(temp);
+
+	enter_work_mode();
+
+	FTS_TEST_FUNC_EXIT();
+
+	return testresult;
+}
+
+
+static int fts_selftest_enry(char *ini_file_name, int temp)
+{
+	int ret = 0;
+
+	ito_test_status = 0;//ITO_TEST_NORMALIZED_NODE
+	/* test initialize */
+	ret = fts_test_main_init();
+	if (ret < 0) {
+		FTS_TEST_ERROR("fts_test_main_init fail");
+		goto test_err;
+	}
+
+	/*Read parse configuration file*/
+	FTS_TEST_SAVE_INFO("ini_file_name:%s\n", ini_file_name);
+	ret = fts_test_get_testparams(ini_file_name);
+	if (ret < 0) {
+		FTS_TEST_ERROR("get testparam fail");
+		goto test_err;
+	}
+
+	ito_test_status = 1;//ITO_TEST_NORMALIZED_NODE
+	/* Start testing according to the test configuration */
+	if (true == fts_selftest_start(temp)) {
+		FTS_TEST_SAVE_INFO("\n\n=======Tp test pass.\n");
+		my_test_result = 2;//ITO_TEST_NORMALIZED_NODE
+	} else {
+		FTS_TEST_SAVE_INFO("\n\n=======Tp test failure.\n");
+		my_test_result = 1;//ITO_TEST_NORMALIZED_NODE
+	}
+
+	ito_test_status = 2;//ITO_TEST_NORMALIZED_NODE
+	ret = 0;
+test_err:
+	fts_test_main_exit();
+	enter_work_mode();
+	return ret;
+
+	FTS_TEST_FUNC_EXIT();
+}
+
+
+static ssize_t fts_tp_selftest_write(struct file *file, const char __user *buffer,
+	size_t count, loff_t *pos)
+{
+	int ret = 0;
+	char tmp[6] = {0};
+	char fwname[FILE_NAME_LENGTH] = "Conf_MultipleTest.ini";
+	struct fts_ts_data *ts_data = fts_data;
+	struct input_dev *input_dev;
+	my_test_result = 0;
+
+	if (copy_from_user(tmp, buffer, count)) {
+			ret = -EFAULT;
+			FTS_TEST_ERROR("copy from user error\n");
+			return ret;
+		}
+
+	if (ts_data->suspended) {
+		FTS_INFO("In suspend, no test, return now");
+		return -EINVAL;
+	}
+
+	input_dev = ts_data->input_dev;
+//	fwname[count - 1] = '\0';
+	fwname[strlen(fwname) + 1] = '\0';
+	FTS_TEST_DBG("fwname:%s.", fwname);
+	if (memcmp(tmp, "i2c", 3) == 0) {
+		ret = fts_get_ic_information(ts_data);
+		if (ret)
+			my_test_result = 1;
+		else
+			my_test_result = 2;
+	} else{
+
+		if (memcmp(tmp, "short", 5) == 0)
+			my_test_type = TEST_SHORT;
+		if (memcmp(tmp, "open", 4) == 0)
+			my_test_type = TEST_OPEN;
+
+	mutex_lock(&input_dev->mutex);
+	fts_irq_disable();
+
+#if defined(FTS_ESDCHECK_EN) && (FTS_ESDCHECK_EN)
+	fts_esdcheck_switch(DISABLE);
+#endif
+
+	ret = fts_enter_test_environment(1);
+	if (ret < 0)
+		FTS_ERROR("enter test environment fail");
+	else
+		fts_selftest_enry(fwname, my_test_type);
+	ret = fts_enter_test_environment(0);
+	if (ret < 0)
+		FTS_ERROR("enter normal environment fail");
+#if defined(FTS_ESDCHECK_EN) && (FTS_ESDCHECK_EN)
+	fts_esdcheck_switch(ENABLE);
+#endif
+
+	fts_irq_enable();
+	mutex_unlock(&input_dev->mutex);
+	}
+	return count;
+}
+
+
+static ssize_t fts_tp_selftest_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
+{
+	char tmp[5];
+	int cnt;
+
+	FTS_TEST_FUNC_ENTER();
+
+	if (*pos != 0)
+		return 0;
+
+	cnt = snprintf(tmp, PAGE_SIZE, "%d\n", my_test_result);
+
+	FTS_TEST_INFO("%s: tmp = %s, self_test_result=%d\n", __func__, tmp, my_test_result);
+	if (copy_to_user(buf, tmp, strlen(tmp)))
+		return -EFAULT;
+
+	*pos += cnt;
+	FTS_TEST_FUNC_EXIT();
+	return cnt;
+
+}
+
+
+
+static const struct file_operations tp_selftest_ops = {
+	.read       = fts_tp_selftest_read,
+	.write      = fts_tp_selftest_write,
+};
+
+
+#define FTS_PROC_TP_SELFTEST "tp_selftest"
+static struct proc_dir_entry *tp_selftest;
+
+int fts_tp_selftest_proc(void)
+{
+	int ret = 0;
+
+	FTS_TEST_INFO("%s:ENTER FUNC ---- %d\n", __func__, __LINE__);
+	tp_selftest = proc_create(FTS_PROC_TP_SELFTEST, 0444, NULL, &tp_selftest_ops);
+	if (tp_selftest == NULL) {
+		FTS_TEST_INFO("fts, create_proc_entry tp_selftest failed\n");
+		ret = -1;
+	}
+	return ret;
+}
+#endif
+
+
+
+
+
+
+
+

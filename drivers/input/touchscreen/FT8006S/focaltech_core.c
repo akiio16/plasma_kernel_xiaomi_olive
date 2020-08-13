@@ -3,7 +3,7 @@
  * FocalTech TouchScreen driver.
  *
  * Copyright (c) 2012-2019, FocalTech Systems, Ltd., all rights reserved.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -71,6 +71,7 @@ struct fts_ts_data *fts_data;
 *****************************************************************************/
 static int fts_ts_suspend(struct device *dev);
 static int fts_ts_resume(struct device *dev);
+bool is_focal_tp;
 
 /*****************************************************************************
 *  Name: fts_wait_tp_to_valid
@@ -274,7 +275,7 @@ static int fts_read_bootid(struct fts_ts_data *ts_data, u8 *id)
 * Output:
 * Return: return 0 if get correct ic information, otherwise return error code
 *****************************************************************************/
-static int fts_get_ic_information(struct fts_ts_data *ts_data)
+int fts_get_ic_information(struct fts_ts_data *ts_data)
 {
 	int ret = 0;
 	int cnt = 0;
@@ -669,6 +670,26 @@ static int fts_read_parse_touchdata(struct fts_ts_data *data)
 	return 0;
 }
 
+#if FTS_PALM_EN
+int enter_palm_mode(struct fts_ts_data *data)
+{
+	u8 mode = 0;
+
+	fts_read_reg(0x9B, &mode);
+	if (0x00 == mode)
+		return 0;
+	else if (0x01 == mode) {
+		FTS_FUNC_ENTER();
+		input_report_key(data->input_dev, 523, 1);
+		input_sync(data->input_dev);
+		input_report_key(data->input_dev, 523, 0);
+		input_sync(data->input_dev);
+	}
+	FTS_FUNC_EXIT();
+	return 0;
+}
+#endif
+
 static void fts_irq_read_report(void)
 {
 	int ret = 0;
@@ -692,6 +713,11 @@ static void fts_irq_read_report(void)
 #endif
 		mutex_unlock(&ts_data->report_mutex);
 	}
+
+#if FTS_PALM_EN
+	enter_palm_mode(ts_data);
+#endif
+
 #if FTS_ESDCHECK_EN
 	fts_esdcheck_set_intr(0);
 #endif
@@ -699,6 +725,17 @@ static void fts_irq_read_report(void)
 
 static irqreturn_t fts_irq_handler(int irq, void *data)
 {
+	struct fts_ts_data *ts_data = (struct fts_ts_data *)data;
+	int ret = 0;
+
+	if (ts_data->suspended) {
+		ret = wait_for_completion_timeout(&ts_data->dev_pm_suspend_completion, msecs_to_jiffies(400));
+		if (0) {
+			FTS_ERROR("system(i2c) can't finished resuming procedure, skip it");
+			return IRQ_HANDLED;
+		}
+	}
+
 	fts_irq_read_report();
 	return IRQ_HANDLED;
 }
@@ -744,6 +781,7 @@ static int fts_input_init(struct fts_ts_data *ts_data)
 	__set_bit(EV_ABS, input_dev->evbit);
 	__set_bit(EV_KEY, input_dev->evbit);
 	__set_bit(BTN_TOUCH, input_dev->keybit);
+	__set_bit(523, input_dev->keybit);
 	__set_bit(INPUT_PROP_DIRECT, input_dev->propbit);
 
 	if (pdata->have_key) {
@@ -1258,6 +1296,18 @@ static int fb_notifier_callback(struct notifier_block *self,
 	struct fts_ts_data *ts_data = container_of(self, struct fts_ts_data,
 						   fb_notif);
 
+#ifdef FACTORY_VERSION_ENABLE
+	if (strnstr(saved_command_line, "androidboot.mode=ffbm-01", strlen(saved_command_line))) {
+		FTS_INFO("we are in ffbm mode. event:%lu", event);
+		if (FB_EVENT_SUSPEND == event) {
+			cancel_work_sync(&fts_data->resume_work);
+			FTS_INFO("need suspend: event = %lu\n", event);
+			fts_ts_suspend(ts_data->dev);
+		}
+		return 0;
+	}
+#endif
+
 	if (!(event == FB_EARLY_EVENT_BLANK || event == FB_EVENT_BLANK)) {
 		FTS_INFO("event(%lu) do not need process\n", event);
 		return 0;
@@ -1333,6 +1383,31 @@ int ctp_hw_info(struct fts_ts_data *ts_data)
 	FTS_FUNC_EXIT();
 	return ret;
 }
+
+static int fts_pm_suspend(struct device *dev)
+{
+	struct fts_ts_data *ts_data = dev_get_drvdata(dev);
+
+	ts_data->dev_pm_suspend = true;
+	reinit_completion(&ts_data->dev_pm_suspend_completion);
+	FTS_INFO("deep sleep in, completion=%d", ts_data->dev_pm_suspend_completion.done);
+	return 0;
+}
+
+static int fts_pm_resume(struct device *dev)
+{
+	struct fts_ts_data *ts_data = dev_get_drvdata(dev);
+
+	ts_data->dev_pm_suspend = false;
+	complete(&ts_data->dev_pm_suspend_completion);
+	FTS_INFO("deep sleep out, completion=%d", ts_data->dev_pm_suspend_completion.done);
+	return 0;
+}
+
+static const struct dev_pm_ops fts_dev_pm_ops = {
+	.suspend = fts_pm_suspend,
+	.resume = fts_pm_resume,
+};
 
 static int fts_ts_probe_entry(struct fts_ts_data *ts_data)
 {
@@ -1439,6 +1514,13 @@ static int fts_ts_probe_entry(struct fts_ts_data *ts_data)
 		FTS_ERROR("init production test fail");
 #endif
 
+#if FTS_TP_SELFTEST
+	ret = fts_tp_selftest_proc();
+	if (ret) {
+		FTS_ERROR("Unable to create tp_selftest_proc proc: %d", ret);
+	}
+#endif
+
 #if FTS_ESDCHECK_EN
 	ret = fts_esdcheck_init(ts_data);
 	if (ret)
@@ -1450,6 +1532,17 @@ static int fts_ts_probe_entry(struct fts_ts_data *ts_data)
 		FTS_ERROR("request irq failed");
 		goto err_irq_req;
 	}
+
+
+#if FOCAL_LOCKDOWN
+	ret = focal_proc_tp_lockdown_info();
+	if (ret != 0) {
+		FTS_ERROR("focal tp_lockdown_info init failed. ret= %d\n", ret);
+		goto err_lockdown_proc_init_failed;
+	}
+#endif
+
+	init_completion(&ts_data->dev_pm_suspend_completion);
 
 	ret = fts_fwupg_init(ts_data);
 	if (ret)
@@ -1493,6 +1586,8 @@ err_bus_init:
 	kfree_safe(ts_data->bus_rx_buf);
 	kfree_safe(ts_data->pdata);
 
+err_lockdown_proc_init_failed:
+	focal_lockdown_proc_deinit();
 	FTS_FUNC_EXIT();
 	return ret;
 }
@@ -1599,6 +1694,13 @@ static int fts_ts_suspend(struct device *dev)
 	return 0;
 }
 
+void lcd_call_tp_reset(int i)
+{
+	FTS_FUNC_ENTER();
+	gpio_set_value(fts_data->pdata->reset_gpio, i);
+	FTS_FUNC_EXIT();
+}
+
 static int fts_ts_resume(struct device *dev)
 {
 	struct fts_ts_data *ts_data = fts_data;
@@ -1673,6 +1775,7 @@ static int fts_ts_probe(struct spi_device *spi)
 	}
 
 	FTS_INFO("Touch Screen(SPI BUS) driver prboe successfully");
+	is_focal_tp = 1;
 	return 0;
 }
 
@@ -1697,6 +1800,7 @@ static struct spi_driver fts_ts_driver = {
 	.driver = {
 		.name = FTS_DRIVER_NAME,
 		.owner = THIS_MODULE,
+		.pm = &fts_dev_pm_ops,
 		.of_match_table = of_match_ptr(fts_dt_match),
 	},
 	.id_table = fts_ts_id,

@@ -3,7 +3,7 @@
  * FocalTech TouchScreen driver.
  *
  * Copyright (c) 2012-2019, Focaltech Ltd. All rights reserved.
- * Copyright (C) 2019 XiaoMi, Inc.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -155,6 +155,7 @@ struct fts_ts_data {
 	struct delayed_work esdcheck_work;
 	struct delayed_work prc_work;
 	struct work_struct resume_work;
+	struct completion dev_pm_suspend_completion;
 	struct ftxxxx_proc proc;
 	spinlock_t irq_lock;
 	struct mutex report_mutex;
@@ -172,6 +173,7 @@ struct fts_ts_data {
 	bool cover_mode;
 	bool charger_mode;
 	bool gesture_mode;
+	bool dev_pm_suspend;
 	/* gesture enable or disable, default: disable */
 	/* multi-touch */
 	struct ts_event *events;
@@ -243,6 +245,8 @@ int fts_esdcheck_resume(void);
 #if FTS_TEST_EN
 int fts_test_init(struct fts_ts_data *ts_data);
 int fts_test_exit(struct fts_ts_data *ts_data);
+int fts_tp_selftest_proc(void);
+int fts_get_ic_information(struct fts_ts_data *ts_data);
 #endif
 
 /* Point Report Check*/
@@ -269,6 +273,8 @@ int fts_ex_mode_init(struct fts_ts_data *ts_data);
 int fts_ex_mode_exit(struct fts_ts_data *ts_data);
 int fts_ex_mode_recovery(struct fts_ts_data *ts_data);
 
+extern char *saved_command_line;
+
 void fts_irq_disable(void);
 void fts_irq_enable(void);
 
@@ -278,4 +284,13 @@ int ctp_hw_info(struct fts_ts_data *ts_data);
 extern int fts_fwupg_get_ver_in_tp(struct fts_ts_data *ts_data, u8 *ver);
 extern bool fts_fwupg_check_fw_valid(struct fts_ts_data *ts_data);
 
+extern int fts_gesture_switch(struct input_dev *dev, unsigned int type, unsigned int code, int value);
+extern bool is_focal_tp;
+extern void lcd_call_tp_reset(int i);
 #endif /* __LINUX_FOCALTECH_CORE_H__ */
+
+#define FOCAL_LOCKDOWN 1
+#if FOCAL_LOCKDOWN
+extern int focal_proc_tp_lockdown_info(void);
+extern void focal_lockdown_proc_deinit(void);
+#endif
