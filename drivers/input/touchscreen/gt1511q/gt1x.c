@@ -1,21 +1,20 @@
-/*
- * drivers/input/touchscreen/gt1x.c
- *
- * 2010 - 2014 Goodix Technology.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be a reference
- * to you, when you are integrating the GOODiX's CTP IC into your system,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * Version: 1.6
- */
+//* drivers/input/touchscreen/gt1x.c
+//*
+//* 2010 - 2014 Goodix Technology.
+//*
+//* This program is free software; you can redistribute it and/or modify
+//* it under the terms of the GNU General Public License as published by
+//* the Free Software Foundation; either version 2 of the License, or
+//* (at your option) any later version.
+//*
+//* This program is distributed in the hope that it will be a reference
+//* to you, when you are integrating the GOODiX's CTP IC into your system,
+//* but WITHOUT ANY WARRANTY; without even the implied warranty of
+//* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//* General Public License for more details.
+//*
+//* Version: 1.6
+
 
 #include "gt1x_generic.h"
 #ifdef CONFIG_GTP_TYPE_B_PROTOCOL
@@ -59,7 +58,7 @@ static struct workqueue_struct *gt1x_resume_workqueue;
 
 static void gt1x_resume_func(struct work_struct *work)
 {
-
+	//struct goodix_ts_data *data = gt1x_data;
 	GTP_INFO("Enter %s", __func__);
 
 	gt1x_resume();
@@ -92,6 +91,13 @@ int gt1x_resume_exit(void)
 }
 #endif
 
+//**
+//* gt1x_i2c_write - i2c write.
+//* @addr: register address.
+//* @buffer: data buffer.
+//* @len: the bytes of data to write.
+//*Return: 0: success, otherwise: failed
+
 s32 gt1x_i2c_write(u16 addr, u8 *buffer, s32 len)
 {
 	struct i2c_msg msg = {
@@ -100,6 +106,13 @@ s32 gt1x_i2c_write(u16 addr, u8 *buffer, s32 len)
 	};
 	return _do_i2c_write(&msg, addr, buffer, len);
 }
+
+//**
+//* gt1x_i2c_read - i2c read.
+//* @addr: register address.
+//* @buffer: data buffer.
+//* @len: the bytes of data to write.
+//*Return: 0: success, otherwise: failed
 
 s32 gt1x_i2c_read(u16 addr, u8 *buffer, s32 len)
 {
@@ -117,6 +130,10 @@ s32 gt1x_i2c_read(u16 addr, u8 *buffer, s32 len)
 	return _do_i2c_read(msgs, addr, buffer, len);
 }
 
+//**
+//* gt1x_irq_enable - enable irq function.
+
+
 void gt1x_irq_enable(void)
 {
 	unsigned long irqflags = 0;
@@ -130,9 +147,18 @@ void gt1x_irq_enable(void)
 	}
 }
 
+//**
+//* gt1x_irq_enable - disable irq function.
+//*  disable irq and wait bottom half
+//*  thread(gt1x_ts_work_thread)
+
 void gt1x_irq_disable(void)
 {
 	unsigned long irqflags;
+	//* because there is an irq enable action in
+	//* the bottom half thread, we need to wait until
+	//* bottom half thread finished.
+
 	synchronize_irq(gt1x_i2c_client->irq);
 	spin_lock_irqsave(&irq_lock, irqflags);
 	if (!irq_disabled) {
@@ -159,13 +185,29 @@ int gt1x_debug_proc(u8 *buf, int count)
 #ifdef CONFIG_GTP_CHARGER_SWITCH
 u32 gt1x_get_charger_status(void)
 {
+	// * Need to get charger status of
+	// * your platform.
+
 	return 0;
 }
 #endif
 
+//**
+//* gt1x_ts_irq_handler - External interrupt service routine
+//*		for interrupt mode.
+//* @irq:  interrupt number.
+//* @dev_id: private data pointer.
+//* Return: Handle Result.
+//*  		IRQ_WAKE_THREAD: top half work finished,
+//*  		wake up bottom half thread to continue the rest work.
+
 static irqreturn_t gt1x_ts_irq_handler(int irq, void *dev_id)
 {
 	unsigned long irqflags;
+
+	//* irq top half, use nosync irq api to
+	//* disable irq line, if irq is enabled,
+	//* then wake up bottom half thread */
 	spin_lock_irqsave(&irq_lock, irqflags);
 	if (!irq_disabled) {
 		irq_disabled = 1;
@@ -177,6 +219,14 @@ static irqreturn_t gt1x_ts_irq_handler(int irq, void *dev_id)
 		return IRQ_HANDLED;
 	}
 }
+
+//**
+//* gt1x_touch_down - Report touch point event .
+//* @id: trackId
+//* @x:  input x coordinate
+//* @y:  input y coordinate
+//* @w:  input pressure
+//* Return: none.
 
 void gt1x_touch_down(s32 x, s32 y, s32 size, s32 id)
 {
@@ -202,6 +252,11 @@ void gt1x_touch_down(s32 x, s32 y, s32 size, s32 id)
 #endif
 }
 
+//**
+//* gt1x_touch_up -  Report touch release event.
+//* @id: trackId
+//* Return: none.
+
 void gt1x_touch_up(s32 id)
 {
 #ifdef CONFIG_GTP_TYPE_B_PROTOCOL
@@ -211,6 +266,11 @@ void gt1x_touch_up(s32 id)
 	input_mt_sync(input_dev);
 #endif
 }
+
+//**
+//* gt1x_ts_work_thread - Goodix touchscreen work function.
+//* @iwork: work struct of gt1x_workqueue.
+//* Return: none.
 
 static irqreturn_t gt1x_ts_work_thread(int irq, void *data)
 {
@@ -286,7 +346,12 @@ exit_eint:
 	return IRQ_HANDLED;
 }
 
+
+//* Devices Tree support,
+
 #ifdef CONFIG_OF
+
+// * gt1x_parse_dt - parse platform infomation form devices tree.
 
 static int gt1x_parse_dt(struct device *dev)
 {
@@ -317,6 +382,11 @@ static int gt1x_parse_dt(struct device *dev)
 	return 0;
 }
 
+//**
+//* gt1x_power_switch - power switch .
+//* @on: 1-switch on, 0-switch off.
+//* return: 0-succeed, -1-faileds
+
 int gt1x_power_switch(int on)
 {
 
@@ -334,13 +404,13 @@ int gt1x_power_switch(int on)
 		ret = regulator_disable(vdd_ana);
 	}
 
-
+	//usleep(10000);
 	return ret;
 
 }
 #endif
 
-
+//goodix_pinctrl_init - pinctrl init
 static int goodix_pinctrl_init(struct i2c_client *client)
 {
 	int ret = 0;
@@ -452,6 +522,9 @@ static void gt1x_release_resource(void)
 	}
 }
 
+
+//* gt1x_request_gpio - Request gpio(INT & RST) ports.
+
 static s32 gt1x_request_gpio(void)
 {
 	s32 ret = 0;
@@ -475,6 +548,11 @@ static s32 gt1x_request_gpio(void)
 	return ret;
 }
 
+
+//* gt1x_request_irq - Request interrupt.
+//* Return
+//*      0: succeed, -1: failed.
+
 static s32 gt1x_request_irq(void)
 {
 	s32 ret = -1;
@@ -496,6 +574,11 @@ static s32 gt1x_request_irq(void)
 		return 0;
 	}
 }
+
+
+//* gt1x_request_input_dev -  Request input device Function.
+//* Return
+//*      0: succeed, -1: failed.
 
 static s8 gt1x_request_input_dev(void)
 {
@@ -577,7 +660,7 @@ static int gtp_lockdown_proc_open (struct inode *inode, struct file *file)
 static const struct file_operations lockdown_proc_ops = {
 	.owner = THIS_MODULE,
 	.open = gtp_lockdown_proc_open,
-
+	//.read = gt91xx_lockdown_read_proc,
 	.read = seq_read,
 };
 
@@ -585,7 +668,7 @@ int gtp_read_Color(struct i2c_client *client)
 {
 	int ret = -1;
 	u8 buf[10] = {0} ;
-
+	//u8 esd_buf[5]={0x42,0x26};
 	char *page = NULL;
 	char *temp = NULL;
 
@@ -687,7 +770,7 @@ static ssize_t store_gtp_fwupdate(struct device *dev,
 					struct device_attribute *attr,
 					const char *buf, size_t count)
 {
-
+	//struct goodix_ts_data *ts = dev_get_drvdata(dev);
 	char update_file_name[FW_NAME_MAX_LEN];
 	int retval;
 
@@ -767,6 +850,10 @@ err:
     return ret;
 }
 
+//* gt1x_ts_probe -   I2c probe.
+//* @client: i2c device struct.
+//* @id: device id.
+//* Return  0: succeed, <0: failed.
 static int gt1x_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
 	int ret = -1;
@@ -783,7 +870,7 @@ static int gt1x_ts_probe(struct i2c_client *client, const struct i2c_device_id *
 		return -ENODEV;
 	}
 
-#ifdef CONFIG_OF
+#ifdef CONFIG_OF	//* device tree support */
 	if (client->dev.of_node) {
 		ret = gt1x_parse_dt(&client->dev);
 		if (ret < 0)
@@ -793,11 +880,25 @@ static int gt1x_ts_probe(struct i2c_client *client, const struct i2c_device_id *
 #error [GOODIX]only support devicetree platform
 #endif
 
+
+	//* Pinctrl pull-up state is required by INT gpio if
+	//* your kernel has the output restriction of gpio tied
+	//* to IRQ line(kernel3.13 and later version).
+
+#ifndef CONFIG_GTP_INT_SEL_SYNC
+	//default_pctrl = pinctrl_get_select_default(&client->dev);
+	//if (IS_ERR(default_pctrl)) {
+		//GTP_ERROR("Please add default pinctrl state"
+				//"(pull-up irq-gpio)");
+		//return PTR_ERR(default_pctrl);
+	//}
+#endif
+	//* init pinctrl states
 	ret  = goodix_pinctrl_init(client);
 	if (ret < 0)
 		GTP_ERROR("Init pinctrl states failed.");
 
-
+//add by likang for pinctrl @20171130/
 
 	if (!ret && gt_pinctrl.ts_pinctrl) {
 		ret = pinctrl_select_state(gt_pinctrl.ts_pinctrl, gt_pinctrl.int_out_low);
@@ -819,14 +920,14 @@ static int gt1x_ts_probe(struct i2c_client *client, const struct i2c_device_id *
 		goto exit_clean;
 	}
 
-
+	//* power on */
 	ret = gt1x_power_switch(SWITCH_ON);
 	if (ret < 0) {
 		GTP_ERROR("Power on failed");
 		goto exit_clean;
 	}
 
-
+	//* reset ic & do i2c test */
 	ret = gt1x_reset_guitar();
 	if (ret != 0) {
 		ret = gt1x_power_switch(SWITCH_OFF);
@@ -842,8 +943,8 @@ static int gt1x_ts_probe(struct i2c_client *client, const struct i2c_device_id *
 		}
 	}
 
-
-
+	//* check firmware, initialize and send
+	// * chip configuration data, initialize nodes */
 	gt1x_init();
 
 	ret = gt1x_request_input_dev();
@@ -855,7 +956,7 @@ static int gt1x_ts_probe(struct i2c_client *client, const struct i2c_device_id *
 		goto err_irq;
 
 #ifdef CONFIG_GTP_ESD_PROTECT
-
+	//* must before auto update */
 	gt1x_init_esd_protect();
 	gt1x_esd_switch(SWITCH_ON);
 #endif
@@ -913,7 +1014,7 @@ static int gt1x_ts_remove(struct i2c_client *client)
 }
 
 #if		defined(CONFIG_FB)
-
+//* frame buffer notifier block control the suspend/resume procedure */
 static struct notifier_block gt1x_fb_notifier;
 
 static int gtp_fb_notifier_callback(struct notifier_block *noti, unsigned long event, void *data)
@@ -961,25 +1062,35 @@ static int gtp_fb_notifier_callback(struct notifier_block *noti, unsigned long e
 
 	return 0;
 }
+//#elif defined(CONFIG_PM)
+//**
+//* gt1x_ts_suspend - i2c suspend callback function.
+//* @dev: i2c device.
+//* Return  0: succeed, -1: failed.
 
 static int gt1x_pm_suspend(struct device *dev)
 {
 	return gt1x_suspend();
 }
 
+//**
+//* gt1x_ts_resume - i2c resume callback function.
+//* @dev: i2c device.
+//* Return  0: succeed, -1: failed.
+
 static int gt1x_pm_resume(struct device *dev)
 {
 	return gt1x_resume();
 }
 
-
+//* bus control the suspend/resume procedure */
 static const struct dev_pm_ops gt1x_ts_pm_ops = {
 	.suspend = gt1x_pm_suspend,
 	.resume = gt1x_pm_resume,
 };
 
 #elif defined(CONFIG_HAS_EARLYSUSPEND)
-
+//* earlysuspend module the suspend/resume procedure */
 static void gt1x_ts_early_suspend(struct early_suspend *h)
 {
 	gt1x_suspend();
@@ -1047,17 +1158,25 @@ static struct i2c_driver gt1x_ts_driver = {
 #ifdef CONFIG_OF
 			.of_match_table = gt1x_match_table,
 #endif
-
+//#if !defined(CONFIG_FB) && defined(CONFIG_PM)
 			.pm = &gt1x_ts_pm_ops,
-
+//#endif
 			},
 };
+
+//**
+//* gt1x_ts_init - Driver Install function.
+//* Return   0---succeed.
 
 static int __init gt1x_ts_init(void)
 {
 	GTP_INFO("GTP driver installing...");
 	return i2c_add_driver(&gt1x_ts_driver);
 }
+
+//**
+//* gt1x_ts_exit - Driver uninstall function.
+//* Return   0---succeed.
 
 static void __exit gt1x_ts_exit(void)
 {

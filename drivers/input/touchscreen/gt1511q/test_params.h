@@ -22,7 +22,7 @@
 #define _TEST_PARAMS_HEADER_
 
 #ifdef __cplusplus
-
+//extern "C" {
 #endif
 
 #define TEST_TYPES                         0x401307
@@ -65,6 +65,6 @@
 	}
 */
 #ifdef __cplusplus
-
+//}
 #endif
 #endif

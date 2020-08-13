@@ -167,7 +167,7 @@ static ssize_t gt1x_debug_write_proc(struct file *file,
 		GTP_ERROR("copy from user fail!");
 		return -EFAULT;
 	}
-
+	// send config
 	if (count == gt1x_cfg_length) {
 		memcpy(gt1x_config, buf, count);
 		ret = gt1x_send_cfg(gt1x_config, gt1x_cfg_length);
@@ -185,7 +185,7 @@ static ssize_t gt1x_debug_write_proc(struct file *file,
 
 	sscanf(buf, "%s %d", (char *)&mode_str, &mode);
 
-
+	//force clear gt1x_config
 	if (strcmp(mode_str, "clear_config") == 0) {
 		GTP_INFO("Force clear gt1x_config");
 		gt1x_send_cmd(GTP_CMD_CLEAR_CFG, 0);
@@ -299,6 +299,9 @@ int gt1x_parse_config(char *filename, u8 *config)
 
 	old_fs = get_fs();
 	set_fs(KERNEL_DS);
+
+	//fp = filp_open(filename, O_RDONLY, 0);
+
 	vts_name = getname_kernel(filename);
 	fp = file_open_name(vts_name, O_RDONLY, 0);
 	if (IS_ERR(fp)) {
@@ -450,6 +453,12 @@ s32 _do_i2c_write(struct i2c_msg *msg, u16 addr, u8 *buffer, s32 len)
 	return 0;
 }
 
+//**
+//* gt1x_i2c_read_dbl_check - read twice and double check
+//* @addr: register address
+//* @buffer: data buffer
+//* @len: bytes to read
+//* Return    <0: i2c error, 0: ok, 1:fail
 
 s32 gt1x_i2c_read_dbl_check(u16 addr, u8 *buffer, s32 len)
 {
@@ -483,6 +492,12 @@ s32 gt1x_i2c_read_dbl_check(u16 addr, u8 *buffer, s32 len)
 	GTP_ERROR("i2c read 0x%04X, %d bytes, double check failed!", addr, len);
 	return VALID;
 }
+
+//**
+//* gt1x_get_info - Get information from ic, such as resolution and
+//* int trigger type
+//* Return    <0: i2c failed, 0: i2c ok
+
 s32 gt1x_get_info(void)
 {
 	u8 opr_buf[4] = { 0 };
@@ -508,6 +523,12 @@ s32 gt1x_get_info(void)
 	return 0;
 }
 
+//**
+//* gt1x_send_cfg - Send gt1x_config Function.
+//* @config: pointer of the configuration array.
+//* @cfg_len: length of configuration array.
+//* Return 0--success,non-0--fail.
+
 s32 gt1x_send_cfg(u8 *config, int cfg_len)
 {
 #ifdef CONFIG_GTP_DRIVER_SEND_CFG
@@ -531,10 +552,13 @@ s32 gt1x_send_cfg(u8 *config, int cfg_len)
 		return INVALID;
 	}
 
-
+	// Extends config */
 	if (config[GTP_REG_EXT_CFG_FLAG - GTP_REG_CONFIG_DATA] & 0x40) {
 		int total_len = GTP_CONFIG_EXT_LENGTH + GTP_CONFIG_ORG_LENGTH;
 
+		//* bit0 of first byte of extended config
+		// * must be set to 1, otherwise the firmware
+		// * will not accept the extended config data
 
 		config[GTP_CONFIG_ORG_LENGTH] |= 0x01;
 		GTP_DEBUG("ext_cfg, debug info:%X", config[GTP_CONFIG_ORG_LENGTH]);
@@ -566,7 +590,7 @@ s32 gt1x_send_cfg(u8 *config, int cfg_len)
 		}
 	}
 
-
+		// Original Config */
 		cfg_len = GTP_CONFIG_ORG_LENGTH;
 	for (i = 0, checksum = 0; i < cfg_len - 3; i += 2)
 		checksum += (config[i] << 8) + config[i + 1];
@@ -586,7 +610,7 @@ s32 gt1x_send_cfg(u8 *config, int cfg_len)
 	while (retry++ < 3) {
 		ret = gt1x_i2c_write(GTP_REG_CONFIG_DATA, config, cfg_len);
 		if (!ret) {
-
+			// at least 200ms, wait for storing config into flash. */
 			msleep(200);
 			mutex_unlock(&mutex_cfg);
 			GTP_DEBUG("Send config successfully!");
@@ -601,7 +625,13 @@ s32 gt1x_send_cfg(u8 *config, int cfg_len)
 }
 
 #ifdef CONFIG_OF
-
+//**
+//* gt1x_parse_tp_config - get config data of touch panel
+//* @of_node: device node
+//* @cfg_name: config name prefix, e.g. "default-config"
+//* @sensor_id: config group ID
+//* @config: config data buffer
+//* return: > 0 size of config data, <0 error
 u8 global_config;
 int gt1x_find_tp_config(struct device *dev,
 		char *cfg_name, u8 sensor_id, u8 *config)
@@ -624,7 +654,7 @@ int gt1x_find_tp_config(struct device *dev,
 
 	extcfg_flag = ((u8 *)prop->value)[GTP_REG_EXT_CFG_FLAG -
 			GTP_REG_CONFIG_DATA];
-	if (extcfg_flag & 0x40)
+	if (extcfg_flag & 0x40) // has extended config  data*/
 		requ_size = GTP_CONFIG_ORG_LENGTH + GTP_CONFIG_EXT_LENGTH;
 	else
 		requ_size = GTP_CONFIG_ORG_LENGTH;
@@ -648,6 +678,12 @@ int gt1x_find_tp_config(struct device *dev,
 }
 #endif
 
+//**
+//* gt1x_init_panel - Prepare config data for touch ic,
+//* don't call this function after initialization.
+//*
+//* Return 0--success,<0 --fail.
+
 s32 gt1x_init_panel(void)
 {
 	u16 cfg_len = 0;
@@ -666,6 +702,9 @@ s32 gt1x_init_panel(void)
 		GTP_ERROR("Failed to obtain config data:%d", cfg_len);
 		return -EINVAL;
 	}
+
+	//* clear the flag, avoid failure when send
+	// * the_config of driver. */
 	gt1x_config[0] &= 0x7F;
 
 #ifdef CONFIG_GTP_CUSTOM_CFG
@@ -674,15 +713,15 @@ s32 gt1x_init_panel(void)
 		gt1x_config[RESOLUTION_LOC + 2] = (u8) GTP_MAX_HEIGHT;
 		gt1x_config[RESOLUTION_LOC + 3] = (u8) (GTP_MAX_HEIGHT >> 8);
 
-	if (GTP_INT_TRIGGER == 0) {
+	if (GTP_INT_TRIGGER == 0) {	// RISING  */
 		gt1x_config[TRIGGER_LOC] &= 0xfe;
-	} else if (GTP_INT_TRIGGER == 1) {
+	} else if (GTP_INT_TRIGGER == 1) {	// FALLING */
 		gt1x_config[TRIGGER_LOC] |= 0x01;
 	}
 	set_reg_bit(gt1x_config[MODULE_SWITCH3_LOC], 5, !gt1x_wakeup_level);
-#endif
+#endif // END GTP_CUSTOM_CFG */
 
-#else
+#else // DRIVER NOT SEND CONFIG */
 	cfg_len = GTP_CONFIG_ORG_LENGTH;
 	ret = gt1x_i2c_read(GTP_REG_CONFIG_DATA, gt1x_config, cfg_len);
 	if (ret < 0)
@@ -696,7 +735,10 @@ s32 gt1x_init_panel(void)
 
 			cfg_len += GTP_CONFIG_EXT_LENGTH;
 		}
-#endif
+#endif // END GTP_DRIVER_SEND_CFG */
+
+	//* match resolution when gt1x_abs_x_max & gt1x_abs_y_max
+	//* have been set already */
 	if ((gt1x_abs_x_max == 0) && (gt1x_abs_y_max == 0)) {
 		gt1x_abs_x_max = (gt1x_config[RESOLUTION_LOC + 1] << 8) +
 				gt1x_config[RESOLUTION_LOC];
@@ -753,13 +795,19 @@ void gt1x_int_as_input(void)
 void gt1x_select_addr(void)
 {
 
-
+	//GTP_GPIO_OUTPUT(GTP_RST_PORT, 0);
+//#ifdef CONFIG_GTP_INT_SEL_SYNC
+	//GTP_GPIO_OUTPUT(GTP_INT_PORT, gt1x_i2c_client->addr == 0x14);
+//#endif
+	//usleep_range(3000, 3030);
+	//GTP_GPIO_OUTPUT(GTP_RST_PORT, 1);
+	//usleep_range(2000, 2030);
 	pinctrl_select_state(gt_pinctrl.ts_pinctrl, gt_pinctrl.erst_output_low);
-	msleep(20);
-
+	msleep(20);				// T2: > 10ms
+	//gt1x_int_output(gt1x_i2c_client->addr == 0x5d);
 	pinctrl_select_state(gt_pinctrl.ts_pinctrl, gt_pinctrl.int_out_high);
 	mdelay(4);
-	pinctrl_select_state(gt_pinctrl.ts_pinctrl, gt_pinctrl.erst_output_high);
+	pinctrl_select_state(gt_pinctrl.ts_pinctrl, gt_pinctrl.erst_output_high);//GTP_GPIO_OUTPUT(GTP_RST_PORT, 1);
 	msleep(10);
 	GTP_INFO("Guitar reset2 GTP I2C Address");
 }
@@ -801,10 +849,10 @@ int gt1x_incell_reset(void)
 		u8 d[2];
 
 		do {
-
+			// select i2c address */
 			gt1x_select_addr();
 
-
+			// test i2c */
 			ret = gt1x_i2c_read(0x4220, d, 1);
 
 		} while (--retry && ret < 0);
@@ -813,10 +861,10 @@ int gt1x_incell_reset(void)
 			return INVALID;
 		}
 
+	// Important! */
+	usleep_range(10000, 11000); // delay 10ms */
 
-	usleep_range(10000, 11000);
-
-
+		// Stop cpu of the touch ic */
 		retry = RST_RETRY;
 		do {
 			d[0] = 0x0C;
@@ -828,7 +876,7 @@ int gt1x_incell_reset(void)
 			return INVALID;
 		}
 
-
+		// skip sensor id check. [start] */
 		retry = RST_RETRY;
 		do {
 			d[0] = 0x00;
@@ -858,6 +906,9 @@ int gt1x_incell_reset(void)
 
 		if (!retry)
 			return INVALID;
+		// skip sensor id check. [end] */
+
+		// release hold of cpu */
 		retry = RST_RETRY;
 		do {
 			d[0] = 0x00;
@@ -885,16 +936,28 @@ s32 gt1x_reset_guitar(void)
 			return ret;
 #else
 		gt1x_select_addr();
-		usleep_range(8000, 8000);
+		usleep_range(8000, 8000);     //must >= 6ms
 #endif
-#ifdef CONFIG_GTP_INT_SEL_SYNC
 
+//* INT gpio is used to select i2c slave address
+//* during hardware reset, and INT synchronization
+//* flow informs the firmware that address selection
+//* has finished,if the kernel restricts the output
+//* of the gpio tied to IRQ line(kernel3.13 and
+//* later version), do the following steps:
+//*   1) select N to CONFIG_GTP_INT_SEL_SYNC
+//*      in menuconfig.
+//*   2) config pinctrl dts, pull-up INT gpio.
+//*   3) chose falling-edge IRQ trigger type.
+
+#ifdef CONFIG_GTP_INT_SEL_SYNC
+	//GTP_GPIO_OUTPUT(GTP_INT_PORT, 0);
 	gt1x_int_output(0);
 	msleep(50);
-
+	//GTP_GPIO_AS_INT(GTP_INT_PORT);
 	gt1x_int_as_input();
 #else
-
+	// firmware init */
 	msleep(50);
 #endif
 
@@ -902,7 +965,10 @@ s32 gt1x_reset_guitar(void)
 	return ret;
 }
 
-
+//**
+//* gt1x_read_version - Read gt1x version info.
+//* @ver_info: address to store version info
+//* Return 0-succeed.
 u8 global_patch_id;
 s32 gt1x_read_version(struct gt1x_version_info *ver_info)
 {
@@ -927,10 +993,10 @@ s32 gt1x_read_version(struct gt1x_version_info *ver_info)
 				checksum += buf[i];
 			}
 
-			if (checksum == 0 &&
+			if (checksum == 0 &&	// first 3 bytes must be number or char */
 			    IS_NUM_OR_CHAR(buf[0]) && IS_NUM_OR_CHAR(buf[1]) &&
 				IS_NUM_OR_CHAR(buf[2]) && buf[10] != 0xFF) {
-
+				//sensor id == 0xFF, retry */
 				break;
 			} else {
 				GTP_ERROR("Read version failed!(checksum error)");
@@ -967,6 +1033,12 @@ s32 gt1x_read_version(struct gt1x_version_info *ver_info)
 	}
 	return 0;
 }
+
+//**
+//* gt1x_get_chip_type - get chip type .
+//*
+//* different chip synchronize in different way,
+
 s32 gt1x_get_chip_type(void)
 {
 	u8 opr_buf[4] = { 0x00 };
@@ -974,19 +1046,19 @@ s32 gt1x_get_chip_type(void)
 	u8 gt9l_data[] = { 0x03, 0x10, 0x90, 0x00 };
 	s32 ret = -1;
 
-
+	// chip type already exist */
 	if (gt1x_chip_type != CHIP_TYPE_NONE) {
 		return 0;
 	}
 
-
+	// read hardware */
 	ret = gt1x_i2c_read_dbl_check(GTP_REG_HW_INFO, opr_buf, sizeof(opr_buf));
 	if (ret) {
 		GTP_ERROR("I2c communication error.");
 		return INVALID;
 	}
 
-
+	// find chip type */
 	if (!memcmp(opr_buf, gt1x_data, sizeof(gt1x_data))) {
 		gt1x_chip_type = CHIP_TYPE_GT1X;
 	} else if (!memcmp(opr_buf, gt9l_data, sizeof(gt9l_data))) {
@@ -1002,6 +1074,12 @@ s32 gt1x_get_chip_type(void)
 		return INVALID;
 	}
 }
+
+//**
+//* gt1x_enter_sleep - Eter sleep function.
+//*
+//* Returns  0--success,non-0--fail.
+
 static s32 gt1x_enter_sleep(void)
 {
 #ifdef CONFIG_GTP_POWER_CTRL_SLEEP
@@ -1012,8 +1090,8 @@ static s32 gt1x_enter_sleep(void)
 		s32 retry = 0;
 #ifdef CONFIG_GTP_INT_SEL_SYNC
 		if (gt1x_wakeup_level == 1)
-
-
+			// high level wakeup */
+			//GTP_GPIO_OUTPUT(GTP_INT_PORT, 0);
 			gt1x_int_output(0);
 		msleep(5);
 #endif
@@ -1031,6 +1109,12 @@ static s32 gt1x_enter_sleep(void)
 	}
 #endif
 }
+
+//**
+//* gt1x_wakeup_sleep - wakeup from sleep mode Function.
+//*
+//* Return: 0--success,non-0--fail.
+
 static s32 gt1x_wakeup_sleep(void)
 {
 #ifndef CONFIG_GTP_POWER_CTRL_SLEEP
@@ -1043,12 +1127,12 @@ static s32 gt1x_wakeup_sleep(void)
 	gt1x_irq_disable();
 
 #ifdef CONFIG_GTP_POWER_CTRL_SLEEP
-
+	// power manager unit control the procedure */
 	gt1x_power_reset();
 	GTP_INFO("Wakeup by poweron");
 	return 0;
 #else
-
+	// gesture wakeup & int port wakeup */
 	while (retry++ < 2) {
 #ifdef CONFIG_GTP_GESTURE_WAKEUP
 		if (gesture_enabled) {
@@ -1063,16 +1147,16 @@ static s32 gt1x_wakeup_sleep(void)
 #endif
 		{
 #ifdef CONFIG_GTP_INT_SEL_SYNC
-
-
+			// wake up through int port */
+			//GTP_GPIO_OUTPUT(GTP_INT_PORT, gt1x_wakeup_level);
 			gt1x_int_output(gt1x_wakeup_level);
 			msleep(5);
 
 			// Synchronize int IO */
-
+			//GTP_GPIO_OUTPUT(GTP_INT_PORT, 0);
 			gt1x_int_output(gt1x_wakeup_level);
 			msleep(50);
-
+			//GTP_GPIO_AS_INT(GTP_INT_PORT);
 			gt1x_int_as_input();
 				flag = 1;
 
@@ -1080,17 +1164,17 @@ static s32 gt1x_wakeup_sleep(void)
 				if (!ret)
 					break;
 #else
-
+			// wakeup throuth hw reset */
 			ret = gt1x_reset_guitar();
 			if (!ret)
 				break;
 #endif
-		}
+		} // end int wakeup */
 	}
 
 	if (ret < 0 && flag) {
-
-
+		//* int  wakeup failed , try waking
+		// * up by reset */
 		while (retry--) {
 			ret = gt1x_reset_guitar();
 			if (!ret)
@@ -1105,8 +1189,17 @@ static s32 gt1x_wakeup_sleep(void)
 		GTP_INFO("Wake up end.");
 		return 0;
 	}
-#endif
+#endif // END GTP_POWER_CTRL_SLEEP */
 }
+
+//**
+//* gt1x_send_cmd - seng cmd
+//* must write data & checksum first
+//* byte    content
+//* 0       cmd
+//* 1       data
+//* 2       checksum
+//* Returns 0 - succeed,non-0 - failed
 
 s32 gt1x_send_cmd(u8 cmd, u8 data)
 {
@@ -1199,6 +1292,12 @@ s32 gt1x_request_event_handler(void)
 	return 0;
 }
 
+//**
+// * gt1x_touch_event_handler - handle touch event
+// * (pen event, key event, finger touch envent)
+// * @data:
+// * Return    <0: failed, 0: succeed
+
 s32 gt1x_touch_event_handler(u8 *data, struct input_dev *dev,
 		struct input_dev *pen_dev)
 {
@@ -1225,6 +1324,12 @@ s32 gt1x_touch_event_handler(u8 *data, struct input_dev *dev,
 	}
 
 	memcpy(touch_data, data, 11);
+
+	//* read the remaining coor data
+		//* 0x814E(touch status) + 8(every coordinate
+		//* consist of 8 bytes data) * touch num +
+		//* keycode + checksum
+
 	if (touch_num > 1) {
 		ret = gt1x_i2c_read((GTP_READ_COOR_ADDR + 11),
 				&touch_data[11], 1 + 8 * touch_num + 2 - 11);
@@ -1233,11 +1338,11 @@ s32 gt1x_touch_event_handler(u8 *data, struct input_dev *dev,
 		}
 	}
 
-
+	// cacl checksum */
 	for (i = 0; i < 1 + 8 * touch_num + 2; i++) {
 		check_sum += touch_data[i];
 	}
-		if (check_sum) {
+		if (check_sum) { // checksum error*/
 			ret = gt1x_i2c_read(GTP_READ_COOR_ADDR,
 				touch_data, 3 + 8 * touch_num);
 			if (ret) {
@@ -1253,13 +1358,16 @@ s32 gt1x_touch_event_handler(u8 *data, struct input_dev *dev,
 				return ERROR_VALUE;
 			}
 		}
-
+//*
+//* cur_event , pre_event bit defination
+//* bits:     bit4	bit3		    bit2	 bit1	   bit0
+//* event:  hover  stylus_key  stylus    key    touch
 
 	key_value = touch_data[1 + 8 * touch_num];
-
+//  start check current event */
 	if ((touch_data[0] & 0x10) && key_value) {
 #if  defined(CONFIG_GTP_HAVE_STYLUS_KEY) || defined(CONFIG_GTP_HAVE_TOUCH_KEY) || defined(CONFIG_TPD_HAVE_BUTTON)
-
+		// get current key states */
 		if (key_value & 0xF0) {
 			SET_BIT(cur_event, BIT_STYLUS_KEY);
 		} else if (key_value & 0x0F) {
@@ -1276,10 +1384,13 @@ s32 gt1x_touch_event_handler(u8 *data, struct input_dev *dev,
 		SET_BIT(cur_event, BIT_TOUCH);
 	}
 
-
+// start handle current event and pre-event */
 #ifdef CONFIG_GTP_HAVE_STYLUS_KEY
 	if (CHK_BIT(cur_event, BIT_STYLUS_KEY) || CHK_BIT(pre_event, BIT_STYLUS_KEY)) {
-
+		//*
+		// * 0x10 -- stylus key0 down
+		// * 0x20 -- stylus key1 down
+		// * 0x40 -- stylus key0 & stylus key1 both down
 
 		u8 temp = (key_value & 0x40) ? 0x30 : key_value;
 		for (i = 4; i < 6; i++) {
@@ -1335,7 +1446,7 @@ s32 gt1x_touch_event_handler(u8 *data, struct input_dev *dev,
 	}
 #endif
 
-
+//* finger touch event*/
 	if (CHK_BIT(cur_event, BIT_TOUCH)) {
 		u8 report_num = 0;
 		coor_data = &touch_data[1];
@@ -1380,7 +1491,7 @@ s32 gt1x_touch_event_handler(u8 *data, struct input_dev *dev,
 		pre_index = 0;
 	}
 
-
+	// start sync input report */
 	if (CHK_BIT(cur_event, BIT_STYLUS_KEY | BIT_STYLUS)
 	    || CHK_BIT(pre_event, BIT_STYLUS_KEY | BIT_STYLUS)) {
 		input_sync(pen_dev);
@@ -1458,7 +1569,7 @@ void gt1x_pen_down(s32 x, s32 y, s32 size, s32 id)
 #else
 	input_report_key(pen_dev, BTN_TOUCH, 1);
 	if ((!size) && (!id)) {
-
+		// for virtual button */
 		input_report_abs(pen_dev, ABS_MT_PRESSURE, 100);
 		input_report_abs(pen_dev, ABS_MT_TOUCH_MAJOR, 100);
 	} else {
@@ -1485,14 +1596,17 @@ void gt1x_pen_up(s32 id)
 }
 #endif
 
+//**
+// *		Proximity Module
+
 #ifdef CONFIG_GTP_PROXIMITY
 #define GTP_PS_DEV_NAME				"goodix_proximity"
 #define GTP_REG_PROXIMITY_ENABLE	0x8049
 #define PS_FARAWAY					1
 #define PS_NEAR						0
 struct gt1x_ps_device{
-		int enabled;
-		int state;
+		int enabled;	// module enabled/disabled
+		int state;	// Faraway or Near
 #ifdef PLATFORM_MTK
 		struct hwmsen_object obj_ps;
 #else
@@ -1508,11 +1622,11 @@ void gt1x_ps_report(int state)
 	s32 ret = -1;
 
 	struct hwm_sensor_data sensor_data;
-
+	//map and store data to hwm_sensor_data
 	sensor_data.values[0] = !!state;
 	sensor_data.value_divide = 1;
 	sensor_data.status = SENSOR_STATUS_ACCURACY_MEDIUM;
-
+	//report to the up-layer
 	ret = hwmsen_get_interrupt_data(ID_PROXIMITY, &sensor_data);
 	if (ret) {
 		GTP_ERROR("Call hwmsen_get_interrupt_data fail = %d\n", ret);
@@ -1520,7 +1634,7 @@ void gt1x_ps_report(int state)
 #else
 	input_report_abs(gt1x_ps_dev->input_dev, ABS_DISTANCE, !!state);
 	input_sync(gt1x_ps_dev->input_dev);
-#endif
+#endif // End PLATFROM_MTK */
 
 	GTP_INFO("Report proximity state: %s",
 			state == PS_FARAWAY ? "FARAWAY":"NEAR");
@@ -1591,7 +1705,7 @@ static s32 gt1x_ps_operate(void *self, u32 command, void *buff_in,
 			GTP_ERROR("Set delay parameter error!");
 			err = -EINVAL;
 		}
-
+		// Do nothing
 		break;
 
 	case SENSOR_ENABLE:
@@ -1693,7 +1807,7 @@ static struct kobj_attribute ps_attrs[] = {
 			gt1x_ps_state_show, gt1x_ps_state_store)
 };
 
-#endif
+#endif // End PLATFORM_MTK */
 
 static int gt1x_ps_init(void)
 {
@@ -1741,7 +1855,7 @@ static int gt1x_ps_init(void)
 				gt1x_ps_dev->input_dev->name);
 		goto err_register_dev;
 	}
-
+		// register sysfs interface  */
 		if (!sysfs_rootdir) {
 			sysfs_rootdir = kobject_create_and_add("goodix", NULL);
 			if (!sysfs_rootdir) {
@@ -1757,7 +1871,7 @@ static int gt1x_ps_init(void)
 			err = -ENOMEM;
 		goto err_register_dev;
 	}
-
+		//  create sysfs files
 		{
 			int i;
 			for (i = 0; i < sizeof(ps_attrs)/sizeof(ps_attrs[0]); i++) {
@@ -1773,7 +1887,7 @@ err_create_file:
 	kobject_put(gt1x_ps_dev->kobj);
 err_register_dev:
 	input_free_device(gt1x_ps_dev->input_dev);
-#endif
+#endif  // End PLATFROM_MTK */
 
 err_exit:
 		kfree(gt1x_ps_dev);
@@ -1796,7 +1910,10 @@ static void gt1x_ps_deinit(void)
 		}
 }
 
-#endif
+#endif //GTP_PROXIMITY */
+
+//**
+//*			ESD Protect Module
 
 #ifdef CONFIG_GTP_ESD_PROTECT
 static int esd_work_cycle = 200;
@@ -1807,7 +1924,7 @@ static void gt1x_esd_check_func(struct work_struct *);
 
 void gt1x_init_esd_protect(void)
 {
-	esd_work_cycle = 2 * HZ;
+	esd_work_cycle = 2 * HZ;	// HZ: clock ticks in 1 second generated by system
 	GTP_DEBUG("Clock ticks for an esd cycle: %d", esd_work_cycle);
 	INIT_DELAYED_WORK(&esd_check_work, gt1x_esd_check_func);
 	mutex_init(&esd_lock);
@@ -1821,14 +1938,14 @@ static void gt1x_deinit_esd_protect(void)
 void gt1x_esd_switch(s32 on)
 {
 	mutex_lock(&esd_lock);
-	if (SWITCH_ON == on) {
+	if (SWITCH_ON == on) {	// switch on esd check */
 		if (!esd_running) {
 			esd_running = 1;
 			GTP_INFO("Esd protector started!");
 			queue_delayed_work(gt1x_workqueue,
 					&esd_check_work, esd_work_cycle);
 		}
-	} else {
+	} else {		// switch off esd check */
 		if (esd_running) {
 			esd_running = 0;
 			GTP_INFO("Esd protector stoped!");
@@ -1860,7 +1977,7 @@ static void gt1x_esd_check_func(struct work_struct *work)
 	}
 
 	if (likely(i < 3)) {
-
+		// IC works normally, Write 0x8040 0xAA, feed the watchdog */
 		gt1x_send_cmd(GTP_CMD_ESD, 0);
 	} else {
 		if (esd_running) {
@@ -1885,16 +2002,22 @@ static void gt1x_esd_check_func(struct work_struct *work)
 }
 #endif
 
+//**
+//*              Smart Cover Module
+
 #ifdef CONFIG_GTP_SMART_COVER
 struct smart_cover_device{
 		int enabled;
-		int state;
-		int suspended;
+		int state; // 0:cover faraway 1:near
+		int suspended;  // suspended or woring
 		struct kobject *kobj;
 		u8 config[GTP_CONFIG_ORG_LENGTH + GTP_CONFIG_EXT_LENGTH];
 		int cfg_len;
 };
 static struct smart_cover_device *gt1x_sc_dev;
+
+//**
+//* gt1x_smart_cover_update_state - update smart cover config
 
 static int gt1x_smart_cover_update_state(void)
 {
@@ -1906,12 +2029,12 @@ static int gt1x_smart_cover_update_state(void)
 		}
 
 	if (!dev->suspended) {
-		if (dev->state) {
+		if (dev->state) {  // near */
 			ret = gt1x_send_cfg(dev->config, dev->cfg_len);
 		} else {
 		#ifdef CONFIG_GTP_CHARGER_SWITCH
-			gt1x_charger_config(1);
-
+			gt1x_charger_config(1);	// charger detector module check and
+									// send a config
 		#else
 			ret = gt1x_send_cfg(gt1x_config, gt1x_cfg_length);
 		#endif
@@ -1951,6 +2074,9 @@ static ssize_t smart_cover_store(struct kobject *kobj,
 	return count;
 }
 
+//**
+//* gt1x_parse_sc_cfg - parse smart cover config
+//*  @sensor_id: sensor id of the hardware
 
 int gt1x_parse_sc_cfg(int sensor_id)
 {
@@ -1998,7 +2124,7 @@ static int gt1x_smart_cover_init(void)
 		gt1x_parse_sc_cfg(gt1x_version.sensor_id);
 
 		if (!sysfs_rootdir) {
-
+			// this kobject is shared between modules, do not free it when error occur
 			sysfs_rootdir = kobject_create_and_add(GOODIX_SYSFS_DIR, NULL);
 			if (!sysfs_rootdir) {
 				err = -2;
@@ -2043,6 +2169,9 @@ static void gt1x_smart_cover_deinit(void)
 }
 #endif
 
+//**
+//*              Charger Detect & Switch Module
+
 #ifdef CONFIG_GTP_CHARGER_SWITCH
 static u8 gt1x_config_charger[GTP_CONFIG_ORG_LENGTH +
 		GTP_CONFIG_EXT_LENGTH] = { 0 };
@@ -2051,6 +2180,12 @@ static int charger_work_cycle = 200;
 static spinlock_t charger_lock;
 static int charger_running;
 static void gt1x_charger_work_func(struct work_struct *);
+
+//**
+//* gt1x_parse_chr_cfg - parse  charger config
+//*  @sensor_id: sensor id of the hardware
+//* Return:  0: succeed, <0 error
+
 int gt1x_parse_chr_cfg(int sensor_id)
 {
 #ifdef CONFIG_MTK_PLATFORM
@@ -2081,7 +2216,7 @@ int gt1x_parse_chr_cfg(int sensor_id)
 
 static void gt1x_init_charger(void)
 {
-	charger_work_cycle = 2 * HZ;
+	charger_work_cycle = 2 * HZ;	// HZ: clock ticks in 1 second generated by system
 	GTP_DEBUG("Clock ticks for an charger cycle: %d", charger_work_cycle);
 	INIT_DELAYED_WORK(&charger_switch_work, gt1x_charger_work_func);
 	spin_lock_init(&charger_lock);
@@ -2090,6 +2225,12 @@ static void gt1x_init_charger(void)
 			GTP_ERROR("Error occured when parse charger config.");
 		}
 }
+
+//**
+//* gt1x_charger_switch - switch states of charging work thread
+//*
+//* @on: SWITCH_ON - start work thread, SWITCH_OFF: stop .
+
 void gt1x_charger_switch(s32 on)
 {
 	spin_lock(&charger_lock);
@@ -2114,6 +2255,12 @@ void gt1x_charger_switch(s32 on)
 		}
 	}
 }
+
+//**
+//* gt1x_charger_config - check and update charging status configuration
+//* @dir_update
+//* 	 0: check before send charging status configuration
+//*  	 1: directly send charging status configuration
 
 void gt1x_charger_config(s32 dir_update)
 {
@@ -2235,6 +2382,9 @@ int gt1x_suspend(void)
 			GTP_ERROR("Suspend failed.");
 		}
 	}
+
+	//* to avoid waking up while not sleeping
+		//delay 48 + 10ms to ensure reliability */
 	msleep(58);
 	GTP_INFO("Suspend end...");
 	return 0;
@@ -2276,7 +2426,7 @@ int gt1x_resume(void)
 #endif
 
 #ifdef CONFIG_GTP_GESTURE_WAKEUP
-
+		// just return 0 if IC does not suspend */
 		if (!gesture_enabled && !gt1x_halt) {
 				return 0;
 			}
@@ -2320,7 +2470,7 @@ s32 gt1x_init(void)
 
 	while (retry++ < GTP_RETRY_3) {
 		gt1x_init_failed = 0;
-
+			// check main system firmware */
 		ret = gt1x_i2c_read_dbl_check(GTP_REG_FW_CHK_MAINSYS, reg_val, 1);
 		if (ret != 0) {
 			gt1x_init_failed = 1;
@@ -2333,7 +2483,7 @@ s32 gt1x_init(void)
 		}
 
 #ifndef CONFIG_GTP_AUTO_UPDATE
-
+			// debug info  */
 			ret = gt1x_i2c_read_dbl_check(GTP_REG_FW_CHK_SUBSYS, reg_val, 1);
 			if (!ret && reg_val[0] == 0xAA) {
 				GTP_ERROR("Check subsystem not pass[0x%2X].", reg_val[0]);
@@ -2342,7 +2492,7 @@ s32 gt1x_init(void)
 			break;
 		}
 
-
+	// if the initialization fails, set default setting */
 	if (gt1x_init_failed) {
 		GTP_ERROR("Init failed, use default setting");
 		gt1x_abs_x_max = GTP_MAX_WIDTH;
@@ -2351,17 +2501,17 @@ s32 gt1x_init(void)
 		gt1x_wakeup_level = GTP_WAKEUP_LEVEL;
 	}
 
-
+	// get chip type */
 	ret = gt1x_get_chip_type();
 	if (ret != 0)
 		GTP_ERROR("Get chip type failed!");
 
-
+		// read version information */
 		ret = gt1x_read_version(&gt1x_version);
 		if (ret != 0)
 			GTP_ERROR("Get verision failed!");
 
-
+		// init and send configs */
 		ret = gt1x_init_panel();
 		if (ret != 0)
 			GTP_ERROR("Init panel failed.");
@@ -2370,7 +2520,7 @@ s32 gt1x_init(void)
 	if (gt1x_workqueue == NULL)
 		GTP_ERROR("Create workqueue failed!");
 
-
+	// init auxiliary node and functions */
 	gt1x_init_debug_node();
 
 #ifdef CONFIG_GTP_CREATE_WR_NODE

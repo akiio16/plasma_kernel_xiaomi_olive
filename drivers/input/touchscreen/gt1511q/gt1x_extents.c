@@ -1,20 +1,20 @@
-/*
- * drivers/input/touchscreen/gt1x_extents.c
- *
- * 2010 - 2016 Goodix Technology.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
-  This program is distributed in the hope that it will be a reference
-  to you, when you are integrating the GOODiX's CTP IC into your system,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  General Public License for more details.
-  Version: 1.6
- */
+//* drivers/input/touchscreen/gt1x_extents.c
+//*
+//* 2010 - 2016 Goodix Technology.
+//*
+//* This program is free software; you can redistribute it and/or modify
+//* it under the terms of the GNU General Public License as published by
+//* the Free Software Foundation; either version 2 of the License, or
+//* (at your option) any later version.
+//*
+// This program is distributed in the hope that it will be a reference
+// to you, when you are integrating the GOODiX's CTP IC into your system,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// Version: 1.6
+///
 
 #include <linux/interrupt.h>
 #include <linux/i2c.h>
@@ -42,9 +42,9 @@
 
 #pragma pack(1)
 typedef struct {
-	u8 ic_msg[6];
+	u8 ic_msg[6];		//*from the first byte */
 	u8 gestures[4];
-	u8 data[3 + GESTURE_MAX_POINT_COUNT * 4 + 80];
+	u8 data[3 + GESTURE_MAX_POINT_COUNT * 4 + 80];	//*80 bytes for extra data */
 } st_gesture_data;
 #pragma pack()
 
@@ -56,13 +56,13 @@ typedef struct {
 #define CHKBITS_16			16
 #define CHKBITS_8			8
 
-int gesture_enabled;
-DOZE_T gesture_doze_status = DOZE_DISABLED;
+int gesture_enabled;	//* module switch */
+DOZE_T gesture_doze_status = DOZE_DISABLED; //* doze status */
 
-
-static u8 gestures_flag[32];
-static st_gesture_data gesture_data;
-static struct mutex gesture_data_mutex;
+//static u8 egde_config;
+static u8 gestures_flag[32];	//* gesture flag, every bit stands for a gesture */
+static st_gesture_data gesture_data;	//* gesture data buffer */
+static struct mutex gesture_data_mutex;	//* lock for gesture data */
 
 int gt1x_gesture_switch(struct input_dev *dev, unsigned int type, unsigned int code, int value)
 {
@@ -114,6 +114,12 @@ static ssize_t gt1x_gesture_data_write(struct file *filp, const char __user *buf
 	return len;
 }
 
+//**
+//* calc_checksum - Calc checksum.
+//* @buf: data to be calc
+//* @len: length of buf.
+//* @bits: checkbits
+//* Return true-pass, false:not pass.
 
 static bool calc_checksum(u8 *buf, int len, int bits)
 {
@@ -176,7 +182,13 @@ s32 gesture_event_handler(struct input_dev *dev)
 		return INVALID;
 	}
 
-
+		//** package: -head 4B + track points + extra info-
+			// - head -
+			//  doze_buf[0]: gesture type,
+			//  doze_buf[1]: number of gesture points ,
+			//  doze_buf[2]: protocol type,
+			//  doze_buf[3]: gesture extra data length.
+			///
 	ret = gt1x_i2c_read(GTP_REG_WAKEUP_GESTURE, doze_buf, 4);
 	if (ret < 0) {
 			return 0;
@@ -200,11 +212,11 @@ s32 gesture_event_handler(struct input_dev *dev)
 		extra_len = 32;
 	}
 
-
+		/// get gesture extra info */
 		if (extra_len >= 0) {
 			u8 ges_data[extra_len + 1];
 
-
+			/// head 4 + extra data * 4 + chksum 1 */
 			ret = gt1x_i2c_read(GTP_REG_WAKEUP_GESTURE + 4,
 				ges_data, extra_len + 1);
 			if (ret < 0) {
@@ -212,20 +224,23 @@ s32 gesture_event_handler(struct input_dev *dev)
 				return 0;
 			}
 
-			if (likely(need_chk)) {
+			if (likely(need_chk)) { /// calc checksum */
 				bool val;
 
 				ges_data[extra_len] += doze_buf[0] + doze_buf[1]
 					+ doze_buf[2] + doze_buf[3];
 
 				val = calc_checksum(ges_data, extra_len + 1, CHKBITS_8);
-				if (unlikely(!val)) {
+				if (unlikely(!val)) { /// check failed */
 					GTP_ERROR("Gesture checksum error.");
 					if (err_flag1) {
 						err_flag1 = 0;
 						ret = 0;
 						goto clear_reg;
 					} else {
+						///* just return 0 without clear reg,
+										//this will receive another int, we
+										//check the data in the next frame */
 						err_flag1 = 1;
 						return 0;
 					}
@@ -239,7 +254,7 @@ s32 gesture_event_handler(struct input_dev *dev)
 			mutex_unlock(&gesture_data_mutex);
 		}
 
-
+		/// check gesture type (if available?) */
 	if (ges_type == 0 || !QUERYBIT(gestures_flag, ges_type)) {
 		GTP_INFO("Gesture[0x%02X] has been disabled.", doze_buf[0]);
 		doze_buf[0] = 0x00;
@@ -248,8 +263,8 @@ s32 gesture_event_handler(struct input_dev *dev)
 		return 0;
 	}
 
-
-		if (len > 0) {
+		/// get gesture point data */
+		if (len > 0) { /// coor num * 4 + chksum 2*/
 			u8 ges_data[len * 4 + 2];
 
 			ret = gt1x_i2c_read(GES_BUFFER_ADDR, ges_data, len * 4);
@@ -258,7 +273,7 @@ s32 gesture_event_handler(struct input_dev *dev)
 				return 0;
 			}
 
-
+			/// checksum reg for gesture point data */
 			ret = gt1x_i2c_read(0x819F, &ges_data[len * 4], 2);
 			if (ret < 0) {
 				GTP_ERROR("Read gesture data failed.");
@@ -268,7 +283,7 @@ s32 gesture_event_handler(struct input_dev *dev)
 			if (likely(need_chk)) {
 				bool val = calc_checksum(ges_data,
 				   len * 4 + 2, CHKBITS_16);
-				if (unlikely(!val)) {
+				if (unlikely(!val)) { // check failed */
 					GTP_ERROR("Gesture checksum error.");
 					if (err_flag2) {
 						err_flag2 = 0;
@@ -289,13 +304,13 @@ s32 gesture_event_handler(struct input_dev *dev)
 		}
 
 	mutex_lock(&gesture_data_mutex);
-	gesture_data.data[0] = ges_type;
-	gesture_data.data[1] = len;
-	gesture_data.data[2] = doze_buf[2] & 0x7F;
-	gesture_data.data[3] = extra_len;
+	gesture_data.data[0] = ges_type;	// gesture type
+	gesture_data.data[1] = len;	        // gesture points number
+	gesture_data.data[2] = doze_buf[2] & 0x7F; // protocol type
+	gesture_data.data[3] = extra_len;   // gesture date length
 	mutex_unlock(&gesture_data_mutex);
 
-
+	// get key code */
 	key_code = ges_type < 16 ? KEY_GES_CUSTOM : KEY_GES_REGULAR;
 	GTP_DEBUG("Gesture: 0x%02X, points: %d", doze_buf[0], doze_buf[1]);
 
@@ -305,7 +320,7 @@ s32 gesture_event_handler(struct input_dev *dev)
 	input_sync(dev);
 
 clear_reg:
-	doze_buf[0] = 0;
+	doze_buf[0] = 0; // clear ges flag
 	gt1x_i2c_write(GTP_REG_WAKEUP_GESTURE, doze_buf, 1);
 	return ret;
 }
@@ -330,9 +345,9 @@ void gt1x_gesture_debug(int on)
 	GTP_DEBUG("Gesture debug %s", on ? "on":"off");
 }
 
-#endif
+#endif // GTP_GESTURE_WAKEUP
 
-
+//HotKnot module
 #ifdef CONFIG_GTP_HOTKNOT
 #include <linux/firmware.h>
 #define HOTKNOT_NODE "hotknot"
@@ -487,7 +502,7 @@ static s32 hotknot_load_authentication_subsystem(void)
 
 	if (gt1x_chip_type == CHIP_TYPE_GT1X)
 		ret = gt1x_load_auth_subsystem();
-	else
+	else // GT2X */
 		ret = gt2x_load_auth_subsystem();
 
 	if (ret < 0)
@@ -552,7 +567,7 @@ static s32 hotknot_block_rw(u8 rqst_hotknot_state, s32 wait_hotknot_timeout)
 		ret = -1;
 	}
 if (force_wake_flag) {
-	got_hotknot_extra_state = 0x07;
+	got_hotknot_extra_state = 0x07;  // force wakeup report as departed
 	}
 	force_wake_flag = 0;
 	return ret;
@@ -648,29 +663,29 @@ s32 hotknot_event_handler(u8 *data)
 
 	return INVALID;
 }
-#endif
-#endif
+#endif //HOTKNOT_BLOCK_RW
+#endif //GTP_HOTKNOT
 
 #define GOODIX_MAGIC_NUMBER			'G'
 #define NEGLECT_SIZE_MASK			(~(_IOC_SIZEMASK << _IOC_SIZESHIFT))
 
-#define GESTURE_ENABLE				_IO(GOODIX_MAGIC_NUMBER, 1)
+#define GESTURE_ENABLE				_IO(GOODIX_MAGIC_NUMBER, 1)	// 1
 #define GESTURE_DISABLE				_IO(GOODIX_MAGIC_NUMBER, 2)
 #define GESTURE_FLAG_SET			_IO(GOODIX_MAGIC_NUMBER, 3)
 #define GESTURE_FLAG_CLEAR			_IO(GOODIX_MAGIC_NUMBER, 4)
-
+//#define SET_ENABLED_GESTURE		(_IOW(GOODIX_MAGIC_NUMBER, 5, u8) & NEGLECT_SIZE_MASK)
 #define GESTURE_DATA_OBTAIN			(_IOR(GOODIX_MAGIC_NUMBER, 6, u8) & NEGLECT_SIZE_MASK)
 #define GESTURE_DATA_ERASE			_IO(GOODIX_MAGIC_NUMBER, 7)
 
-
+//#define HOTKNOT_LOAD_SUBSYSTEM	(_IOW(GOODIX_MAGIC_NUMBER, 6, u8) & NEGLECT_SIZE_MASK)
 #define HOTKNOT_LOAD_HOTKNOT		_IO(GOODIX_MAGIC_NUMBER, 20)
 #define HOTKNOT_LOAD_AUTHENTICATION	_IO(GOODIX_MAGIC_NUMBER, 21)
 #define HOTKNOT_RECOVERY_MAIN		_IO(GOODIX_MAGIC_NUMBER, 22)
-
+//#define HOTKNOT_BLOCK_RW			(_IOW(GOODIX_MAGIC_NUMBER, 6, u8) & NEGLECT_SIZE_MASK)
 #define HOTKNOT_DEVICES_PAIRED		_IO(GOODIX_MAGIC_NUMBER, 23)
 #define HOTKNOT_MASTER_SEND			_IO(GOODIX_MAGIC_NUMBER, 24)
 #define HOTKNOT_SLAVE_RECEIVE		_IO(GOODIX_MAGIC_NUMBER, 25)
-
+//#define HOTKNOT_DEVICES_COMMUNICATION
 #define HOTKNOT_MASTER_DEPARTED		_IO(GOODIX_MAGIC_NUMBER, 26)
 #define HOTKNOT_SLAVE_DEPARTED		_IO(GOODIX_MAGIC_NUMBER, 27)
 #define HOTKNOT_VENDOR_VERSION		(_IOR(GOODIX_MAGIC_NUMBER, 28, u8) & NEGLECT_SIZE_MASK)
@@ -710,6 +725,9 @@ static s32 io_iic_read(u8 *data, void __user *arg)
 		}
 		err = CMD_HEAD_LENGTH + data_length;
 	}
+	//GTP_DEBUG("IIC_READ.addr:0x%4x, length:%d, ret:%d", addr, data_length, err);
+	//GTP_DEBUG_ARRAY((&data[CMD_HEAD_LENGTH]), data_length);
+
 	return err;
 }
 
@@ -726,20 +744,32 @@ static s32 io_iic_write(u8 *data)
 	if (!err) {
 		err = CMD_HEAD_LENGTH + data_length;
 	}
+
+	//GTP_DEBUG("IIC_WRITE.addr:0x%4x, length:%d, ret:%d", addr, data_length, err);
+	//GTP_DEBUG_ARRAY((&data[CMD_HEAD_LENGTH]), data_length);
 	return err;
 }
 
+//@return, 0:operate successfully
+//         > 0: the length of memory size ioctl has accessed,
+//         error otherwise.
 static long gt1x_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	u32 value = 0;
-	s32 ret = 0;
+	s32 ret = 0;		//the initial value must be 0
 	u8 *data = NULL;
 	int cnt = 30;
 
-
+	// Blocking when firmwaer updating */
 	while (cnt-- && update_info.status) {
 		ssleep(1);
 	}
+
+	//GTP_DEBUG("IOCTL CMD:%x", cmd);
+	//* GTP_DEBUG("command:%d, length:%d, rw:%s",
+			//_IOC_NR(cmd),
+			//_IOC_SIZE(cmd),
+			//(_IOC_DIR(cmd) & _IOC_READ) ? "read" : (_IOC_DIR(cmd) & _IOC_WRITE) ? "write" : "-");
 
 
 	if (_IOC_DIR(cmd)) {
@@ -798,7 +828,7 @@ static long gt1x_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 #endif
 		break;
 
-
+		//print a string to syc log messages between application and kernel.
 	case IO_PRINT:
 		if (data)
 			GTP_INFO("%s", (char *)data);
@@ -842,7 +872,7 @@ static long gt1x_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		GTP_DEBUG("ERASE_GESTURE_DATA");
 		gesture_clear_wakeup_data();
 		break;
-#endif
+#endif // GTP_GESTURE_WAKEUP
 
 #ifdef CONFIG_GTP_HOTKNOT
 	case HOTKNOT_VENDOR_VERSION:
@@ -896,8 +926,8 @@ static long gt1x_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	case HOTKNOT_WAKEUP_BLOCK:
 		hotknot_wakeup_block();
 		break;
-#endif
-#endif
+#endif //HOTKNOT_BLOCK_RW
+#endif //GTP_HOTKNOT
 
 	default:
 		GTP_INFO("Unknown cmd.");
@@ -991,3 +1021,88 @@ void gt1x_deinit_node(void)
 	misc_deregister(&hotknot_misc_device);
 #endif
 }
+
+/*
+static int edge_inhibition_open(struct inode *inode, struct file *file)
+{
+	s32 ret = 0;
+	return ret;
+}
+
+static ssize_t edge_inhibition_read(struct file *file, char __user *buff, size_t size, loff_t *ppos)
+{
+	s32 ret = -1;
+	GTP_DEBUG("egde_inhibition_read. ppos:%d", (int)*ppos);
+
+	ret = copy_to_user(buff, &egde_config, 1);
+
+	return ret;
+}
+
+static ssize_t edge_inhibition_write(struct file *filp, const char __user *buff, size_t len, loff_t *off)
+{
+	s32 ret = 0;
+
+	GTP_DEBUG_FUNC();
+
+	ret = copy_from_user(&egde_config, buff, 1);
+	if (ret) {
+		GTP_ERROR("copy_from_user failed.");
+		return -EPERM;
+	}
+	if (egde_config > '0' && egde_config == '0' && egde_config < '9' && egde_config == '9') {
+
+		egde_config -= '0';
+
+	} else if (egde_config > 'A' && egde_config == 'A' && egde_config < 'F' && egde_config == 'F') {
+
+		egde_config -= '6';
+	} else if (egde_config > 'a' && egde_config == 'a' && egde_config < 'f' && egde_config == 'f') {
+
+		edge_config -= 'V';
+	} else {
+
+		return 0;
+	}
+
+			GTP_DEBUG("Suppressed top edge");
+			msleep(20);
+			gt1x_send_cmd(EGDE_INHIBITION_ADDR, egde_config);
+
+
+	GTP_DEBUG("edge_config:%d, ret:%d", egde_config, ret);
+
+	return len;
+}
+
+static const struct file_operations edge_inhibition_fops = {
+	.owner = THIS_MODULE,
+#ifdef CONFIG_GTP_EDGE_INHIBITION
+	.open = edge_inhibition_open,
+	.read = edge_inhibition_read,
+	.write = edge_inhibition_write,
+#endif
+};
+
+s32 gt1x_edge_inhibition_init(void)
+{
+#ifdef CONFIG_GTP_EDGE_INHIBITION
+	struct proc_dir_entry *proc_entry = NULL;
+	proc_entry = proc_create(EDGE_INHIBITION_PROC, 0664, NULL, &edge_inhibition_fops);
+	if (proc_entry == NULL) {
+		GTP_ERROR("CAN't create proc entry /proc/%s.", EDGE_INHIBITION_PROC);
+		return INVALID;
+	} else {
+		GTP_INFO("Created proc entry /proc/%s.", EDGE_INHIBITION_PROC);
+	}
+#endif
+	return 0;
+}
+
+s32 gt1x_edge_inhibition_deinit(void)
+{
+	#ifdef CONFIG_GTP_EDGE_INHIBITION
+	remove_proc_entry(EDGE_INHIBITION_PROC, NULL);
+	#endif
+}
+*/

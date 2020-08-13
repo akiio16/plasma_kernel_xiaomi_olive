@@ -1,19 +1,19 @@
-/* drivers/input/touchscreen/gt1x_generic.h
- *
- * 2010 - 2016 Goodix Technology.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be a reference
- * to you, when you are integrating the GOODiX's CTP IC into your system,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- */ Version: 1.6
+//* drivers/input/touchscreen/gt1x_generic.h
+//
+// 2010 - 2016 Goodix Technology.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be a reference
+// to you, when you are integrating the GOODiX's CTP IC into your system,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// Version: 1.6
 
 
 #ifndef _GT1X_GENERIC_H_
@@ -65,13 +65,19 @@
 #define SWITCH_ON					1
 
 #define GTP_VENDOR_INFO                             "[Vendor]holitech(TP) + holitech(LCD), [TP-IC]GT1151Q, [FW]Ver"
-#define GES_BUFFER_ADDR			0xBE0C
+
+// buffer used to store ges track points coor. */
+//#define GES_BUFFER_ADDR		0xA2A0  // GT1151
+#define GES_BUFFER_ADDR			0xBE0C	//GT1151Q
+//#define GES_BUFFER_ADDR		0x9734  // GT1152
+//#define GES_BUFFER_ADDR		0xBDA8  // GT9286
+//#define GES_BUFFER_ADDR		0xBC74  // GT6286
 #ifndef GES_BUFFER_ADDR
 #warning  [GOODIX] need define GES_BUFFER_ADDR .
 #endif
 
-#define KEY_GES_REGULAR			KEY_F2
-#define KEY_GES_CUSTOM			KEY_F3
+#define KEY_GES_REGULAR			KEY_F2	// regular gesture-key
+#define KEY_GES_CUSTOM			KEY_F3	//customize gesture-key
 
 #ifdef CONFIG_GTP_DEBUG_ON
 #define GTP_DEBUG_ON	1
@@ -94,7 +100,7 @@
 #ifdef CONFIG_GTP_CUSTOM_CFG
 #define GTP_MAX_HEIGHT		1440
 #define GTP_MAX_WIDTH		720
-#define GTP_INT_TRIGGER		1
+#define GTP_INT_TRIGGER		1	//0:Rising 1:Falling
 #define GTP_WAKEUP_LEVEL	1
 #else
 #define GTP_MAX_HEIGHT		4096
@@ -128,7 +134,7 @@
 #define GTP_REG_COLOR_GT1151Q			0x99A4
 
 #define GTP_REG_WAKEUP_GESTURE			0x814C
-#define GTP_REG_WAKEUP_GESTURE_DETAIL	0xA2A0
+#define GTP_REG_WAKEUP_GESTURE_DETAIL	0xA2A0	// need change
 #define GTP_BAK_REF_PATH				"/data/gt1x_ref.bin"
 #define GTP_MAIN_CLK_PATH				"/data/gt1x_clk.bin"
 
@@ -138,7 +144,7 @@
 
 #define EDGE_INHIBITION_PROC			"edge_control"
 
-
+// request type */
 #define GTP_RQST_CONFIG					0x01
 #define GTP_RQST_BAK_REF				0x02
 #define GTP_RQST_RESET					0x03
@@ -154,7 +160,7 @@
 #define HN_SLAVE_RECEIVED				0x08
 #define EGDE_INHIBITION_ADDR			0x43
 
-
+//Register define */
 #define GTP_READ_COOR_ADDR			0x814E
 #define GTP_REG_CMD					0x8040
 #define GTP_REG_SENSOR_ID			0x814A
@@ -178,7 +184,7 @@
 
 #define set_reg_bit(reg, pos, val)	((reg) = ((reg) & (~(1<<(pos))))|(!!(val)<<(pos)))
 
-
+// cmd define */
 #define GTP_CMD_SLEEP				0x05
 #define GTP_CMD_CHARGER_ON			0x06
 #define GTP_CMD_CHARGER_OFF			0x07
@@ -188,7 +194,7 @@
 #define GTP_CMD_HN_TRANSFER			0x22
 #define GTP_CMD_HN_EXIT_SLAVE		0x28
 
-
+// define offset in the config*/
 #define RESOLUTION_LOC				(GTP_REG_CONFIG_RESOLUTION - GTP_REG_CONFIG_DATA)
 #define TRIGGER_LOC					(GTP_REG_CONFIG_TRIGGER - GTP_REG_CONFIG_DATA)
 #define MODULE_SWITCH3_LOC			(GTP_REG_MODULE_SWITCH3 - GTP_REG_CONFIG_DATA)
@@ -207,7 +213,7 @@
 
 #define IS_NUM_OR_CHAR(x)    (((x) >= 'A' && (x) <= 'Z') || ((x) >= '0' && (x) <= '9'))
 
-
+//Log define
 #define GTP_INFO(fmt, arg...)			printk("<<GTP-INF>>[%s:%d] "fmt"\n", __func__, __LINE__, ##arg)
 #define GTP_ERROR(fmt, arg...)			printk("<<GTP-ERR>>[%s:%d] "fmt"\n", __func__, __LINE__, ##arg)
 #define GTP_DEBUG(fmt, arg...)			do {\
@@ -262,29 +268,29 @@ typedef enum {
 } gt1x_chip_type_t;
 
 #define _ERROR(e)		((0x01 << e) | (0x01 << (sizeof(s32) * 8 - 1)))
-#define ERROR			_ERROR(1)
+#define ERROR			_ERROR(1)	//for common use
+//system relevant
+#define ERROR_IIC		_ERROR(2)	//IIC communication error.
+#define ERROR_MEM		_ERROR(3)	//memory error.
 
-#define ERROR_IIC		_ERROR(2)
-#define ERROR_MEM		_ERROR(3)
-
-
-#define ERROR_HN_VER	_ERROR(10)
-#define ERROR_CHECK		_ERROR(11)
-#define ERROR_RETRY		_ERROR(12)
-#define ERROR_PATH		_ERROR(13)
+//system irrelevant
+#define ERROR_HN_VER	_ERROR(10)	//HotKnot version error.
+#define ERROR_CHECK		_ERROR(11)	//Compare src and dst error.
+#define ERROR_RETRY		_ERROR(12)	//Too many retries.
+#define ERROR_PATH		_ERROR(13)	//Mount path error
 #define ERROR_FW		_ERROR(14)
 #define ERROR_FILE		_ERROR(15)
-#define ERROR_VALUE		_ERROR(16)
+#define ERROR_VALUE		_ERROR(16)	//Illegal value of variables
 
 #define GTP_RETRY_3		3
 #define GTP_RETRY_5		5
 
-
+// bit operation */
 #define SET_BIT(data, flag)	((data) |= (flag))
 #define CLR_BIT(data, flag)	((data) &= ~(flag))
 #define CHK_BIT(data, flag)	((data) & (flag))
 
-
+// touch states */
 #define BIT_TOUCH			0x01
 #define BIT_TOUCH_KEY		0x02
 #define BIT_STYLUS			0x04
@@ -306,6 +312,9 @@ struct goodix_pinctrl {
 };
 
 
+//			Export global variables and functions		*/
+
+// Export from gt1x_extents.c and gt1x_firmware.h */
 #ifdef CONFIG_GTP_HOTKNOT
 extern u8 hotknot_enabled;
 extern u8 hotknot_transfer_mode;
@@ -317,7 +326,7 @@ extern void hotknot_wakeup_block(void);
 extern s32 hotknot_paired_flag;
 extern s32 hotknot_event_handler(u8 *data);
 #endif
-#endif
+#endif //GTP_HOTKNOT
 #define CONFIG_GTP_ESD_PROTECT 1
 
 extern s32 gt1x_init_node(void);
@@ -332,7 +341,7 @@ extern s32 gesture_enter_doze(void);
 extern void gesture_clear_wakeup_data(void);
 #endif
 
-
+// Export from gt1x_tpd.c */
 extern void gt1x_touch_down(s32 x, s32 y, s32 size, s32 id);
 extern void gt1x_touch_up(s32 id);
 extern int gt1x_power_switch(s32 state);
@@ -350,17 +359,17 @@ struct fw_update_info {
 	u32 fw_length;
 	const struct firmware *fw;
 
-
+	// file update
 	char *fw_name;
 	u8 *buffer;
 	mm_segment_t old_fs;
 	struct file *fw_file;
 
-
+	// header update
 	u8 *fw_data;
 };
 
-
+// Export form gt1x_update.c */
 extern struct fw_update_info update_info;
 
 extern u8 gt1x_default_FW[];
@@ -374,13 +383,13 @@ extern int gt1x_hold_ss51_dsp_no_reset(void);
 extern int gt1x_load_patch(u8 *patch, u32 patch_size, int offset, int bank_size);
 extern int gt1x_startup_patch(void);
 
-
+// Export from gt1x_tool.c */
 #ifdef CONFIG_GTP_CREATE_WR_NODE
 extern int gt1x_init_tool_node(void);
 extern void gt1x_deinit_tool_node(void);
 #endif
 
-
+// Export from gt1x_generic.c */
 extern struct i2c_client *gt1x_i2c_client;
 
 extern gt1x_chip_type_t gt1x_chip_type;
@@ -452,7 +461,7 @@ extern int gt1x_parse_chr_cfg(int sensor_id);
 #define IIC_MAX_TRANSFER_SIZE       250
 
 #ifdef CONFIG_MTK_PLATFORM
-
+// MTK platform */
 #include <asm/uaccess.h>
 #ifdef CONFIG_MTK_BOOT
 #include "mt_boot_common.h"
@@ -502,7 +511,7 @@ extern void tpd_on(void);
 extern void tpd_off(void);
 
 #else
-
+// Generic Platform(Qcom or othter) */
 #ifdef CONFIG_OF
 extern int gt1x_rst_gpio;
 extern int gt1x_int_gpio;
@@ -519,10 +528,10 @@ extern int gt1x_int_gpio;
 #define GTP_IRQ_TAB					{IRQ_TYPE_EDGE_RISING, IRQ_TYPE_EDGE_FALLING,\
 		IRQ_TYPE_LEVEL_LOW, IRQ_TYPE_LEVEL_HIGH}
 
-#endif
+#endif // CONFIG_MTK_PLATFORM */
 
 int gt1x_gesture_switch(struct input_dev *dev, unsigned int type, unsigned int code, int value);
 
 
-#endif
+#endif // _GT1X_GENERIC_H_
 

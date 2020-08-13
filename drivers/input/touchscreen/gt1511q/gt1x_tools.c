@@ -30,20 +30,20 @@ static int gt1x_tool_open(struct inode *inode, struct file *file);
 
 #pragma pack(1)
 typedef struct {
-	u8 wr;
-	u8 flag;
-	u8 flag_addr[2];
-	u8 flag_val;
-	u8 flag_relation;
-	u16 circle;
-	u8 times;
-	u8 retry;
-	u16 delay;
-	u16 data_len;
-	u8 addr_len;
-	u8 addr[2];
-	u8 res[3];
-	u8 *data;
+	u8 wr;			//write read flag£¬0:R  1:W  2:PID 3:
+	u8 flag;		//0:no need flag/int 1: need flag  2:need int
+	u8 flag_addr[2];		//flag address
+	u8 flag_val;		//flag val
+	u8 flag_relation;	//flag_val:flag 0:not equal 1:equal 2:> 3:<
+	u16 circle;		//polling cycle
+	u8 times;		//plling times
+	u8 retry;		//I2C retry times
+	u16 delay;		//delay befor read or after write
+	u16 data_len;		//data length
+	u8 addr_len;		//address length
+	u8 addr[2];		//address
+	u8 res[3];		//reserved
+	u8 *data;		//data pointer
 } st_cmd_head;
 #pragma pack()
 static st_cmd_head cmd_head;
@@ -78,7 +78,7 @@ static void set_tool_node_name(char *procname)
 int gt1x_init_tool_node(void)
 {
 	memset(&cmd_head, 0, sizeof(cmd_head));
-	cmd_head.wr = 1;
+	cmd_head.wr = 1;	//if the first operation is read, will return fail.
 	cmd_head.data = kzalloc(DATA_LENGTH_UINT, GFP_KERNEL);
 	if (NULL == cmd_head.data) {
 		GTP_ERROR("Apply for memory failed.");
@@ -213,7 +213,7 @@ static ssize_t gt1x_tool_write(struct file *filp, const char __user *buff, size_
 	u8 temp_data = 0;
 
 	GTP_DEBUG_FUNC();
-
+	//GTP_DEBUG_ARRAY((u8 *) buff, len);
 
 	ret = copy_from_user(&cmd_head, buff, CMD_HEAD_LENGTH);
 	if (ret) {
@@ -251,7 +251,7 @@ static ssize_t gt1x_tool_write(struct file *filp, const char __user *buff, size_
 				return INVALID;
 			}
 		} else if (2 == cmd_head.flag) {
-
+			//Need interrupt!
 		}
 
 		addr = (cmd_head.addr[0] << 8) + cmd_head.addr[1];
@@ -283,21 +283,21 @@ static ssize_t gt1x_tool_write(struct file *filp, const char __user *buff, size_
 		}
 
 		return cmd_head.data_len + CMD_HEAD_LENGTH;
-	} else if (3 == cmd_head.wr) {
+	} else if (3 == cmd_head.wr) {	//gt1x unused
 
 		memcpy(IC_TYPE, cmd_head.data, cmd_head.data_len);
 		return cmd_head.data_len + CMD_HEAD_LENGTH;
-	} else if (5 == cmd_head.wr) {
+	} else if (5 == cmd_head.wr) {	//?
 
-
+		//memcpy(IC_TYPE, cmd_head.data, cmd_head.data_len);
 		return cmd_head.data_len + CMD_HEAD_LENGTH;
-	} else if (7 == cmd_head.wr) {
+	} else if (7 == cmd_head.wr) {	//disable irq!
 		gt1x_irq_disable();
 #ifdef CONFIG_GTP_ESD_PROTECT
 		gt1x_esd_switch(SWITCH_OFF);
 #endif
 		return CMD_HEAD_LENGTH;
-	} else if (9 == cmd_head.wr) {
+	} else if (9 == cmd_head.wr) {	//enable irq!
 		gt1x_irq_enable();
 #ifdef CONFIG_GTP_ESD_PROTECT
 		gt1x_esd_switch(SWITCH_ON);
@@ -326,7 +326,7 @@ static ssize_t gt1x_tool_write(struct file *filp, const char __user *buff, size_
 	} else if (15 == cmd_head.wr) {
 	       struct task_struct *thrd = NULL;
 		memset(cmd_head.data, 0, cmd_head.data_len + 1);
-
+		//memcpy(cmd_head.data, &buff[CMD_HEAD_LENGTH], cmd_head.data_len);
 		ret = copy_from_user(cmd_head.data, &buff[CMD_HEAD_LENGTH], cmd_head.data_len);
 		if (ret) {
 			GTP_ERROR("copy_from_user failed.");
@@ -391,7 +391,7 @@ static ssize_t gt1x_tool_read(struct file *filp, char __user *buffer, size_t cou
 				return INVALID;
 			}
 		} else if (2 == cmd_head.flag) {
-
+			//Need interrupt!
 		}
 
 		addr = (cmd_head.addr[0] << 8) + cmd_head.addr[1];
@@ -413,7 +413,7 @@ static ssize_t gt1x_tool_read(struct file *filp, char __user *buffer, size_t cou
 				GTP_ERROR("[READ]Read data failed!");
 				return INVALID;
 			}
-
+			//memcpy(&buffer[loc], &cmd_head.data[GTP_ADDR_LENGTH], len);
 			if (copy_to_user(&buffer[loc], &cmd_head.data[GTP_ADDR_LENGTH], len)) {
 
 					GTP_ERROR("[Read]copy_to_user failed.");
@@ -429,7 +429,7 @@ static ssize_t gt1x_tool_read(struct file *filp, char __user *buffer, size_t cou
 	} else if (2 == cmd_head.wr) {
 		ret = copy_to_user(buffer, IC_TYPE, sizeof(IC_TYPE));
 		*ppos += sizeof(IC_TYPE);
-
+		//GTP_DEBUG("Return ic type:%s len:%d.", IC_TYPE, sizeof(IC_TYPE));
 		return ret;
 		} else if (4 == cmd_head.wr) {
 		u8 progress_buf[4];
@@ -446,19 +446,19 @@ static ssize_t gt1x_tool_read(struct file *filp, char __user *buffer, size_t cou
 		*ppos += 4;
 		return 4;
 	} else if (6 == cmd_head.wr) {
-
+		//Read error code!
 		return INVALID;
 	} else if (8 == cmd_head.wr) {
 	    /* Read driver version */
 		s32 tmp_len;
 		tmp_len = strlen(GTP_DRIVER_VERSION);
-
+		//memcpy(buffer, GTP_DRIVER_VERSION, tmp_len);
 		if (copy_to_user(buffer, GTP_DRIVER_VERSION, tmp_len) || copy_to_user(&buffer[tmp_len], "\n", 1)) {
 
 			GTP_ERROR("[Read]copy_to_user failed.");
 			return INVALID;
 		}
-
+		//buffer[tmp_len] = 0;
 		*ppos += tmp_len + 1;
 		return (tmp_len + 1);
 	}

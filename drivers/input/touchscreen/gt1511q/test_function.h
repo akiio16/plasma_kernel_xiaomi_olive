@@ -22,7 +22,7 @@
 #define _TEST_FUNCTION_HEADER_
 
 #ifdef __cplusplus
-
+//extern "C" {
 #endif
 
 struct system_variable {
@@ -42,16 +42,16 @@ struct system_variable {
 };
 
 typedef struct {
-	unsigned char master;
-	unsigned char position;
+	unsigned char master;	// Pin No.
+	unsigned char position;	//If TX Pin No. > 26, position = master-1 as SE1.
 	unsigned char slave;
 	unsigned short short_code;
 } strShortRecord;
 
-
+// channel whether need detection
 #define _NEED_CHECK                     0x00
 #define _NEED_NOT_CHECK                 0x01
-
+// test options (check_types)
 #define _MAX_CHECK                      0x0001
 #define _MIN_CHECK                      0x0002
 #define _ACCORD_CHECK                   0x0004
@@ -61,7 +61,7 @@ typedef struct {
 #define _SHORT_CHECK                    0x0040
 #define _KEY_MAX_CHECK                  0x0100
 #define _KEY_MIN_CHECK                  0x0200
-
+//#define _VERSION_CHECK                0x0400
 #define _IC_RESET_CHECK                 0x00010000
 #define _VER_EQU_CHECK                  0x00020000
 #define _VER_GREATER_CHECK              0x00040000
@@ -73,7 +73,7 @@ typedef struct {
 #define _LINE_CHECK                     0x01000000
 #define _KEY_CHECK                      0x02000000
 #define _TEST_CLR_FIX_CFG               0x04000000
-
+//#define _DIFF_TEST                    0x08000000
 #define _UNIFORMITY_CHECK               0x08000000
 
 #define _SPECIAL_LIMIT_CHANNEL_NUM      0x03
@@ -82,14 +82,14 @@ typedef struct {
 #define _CHANNEL_TX_FLAG                0x80
 #define _GT9_SHORT_HEAD                 3
 #define _GT9_CHK_SHORT_TOTAL            200
-#define _GT9_UPLOAD_SHORT_TOTAL         15
-#define _GT9_SHORT_TEST_ERR             88
+#define _GT9_UPLOAD_SHORT_TOTAL         15	//Max == 10
+#define _GT9_SHORT_TEST_ERR             88	//Fixed == 88
 #define MAX_BUFFER_SIZE                 4096
 #define PACKAGE_SIZE                    256
 
-
-
-
+//#define _DRV_TOTAL_NUM                  32  //sys.max_driver_num
+//#define _SEN_TOTAL_NUM                  32  //sys.max_sensor_num
+//#define _SHORT_HEAD                     4
 #define MAX_KEY_RAWDATA                 42
 #define GTP_TEST_PARAMS_FROM_INI        1
 #define GTP_SAVE_TEST_DATA              1
@@ -103,8 +103,8 @@ typedef struct {
 #define SUCCESS			0
 
 /*******************************************************************/
-
-
+//nst unsigned char GT1143_SEN_MAP[40] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 21, 24, 26, 28, 30,
+//                       0, 2, 4, 6, 8, 12, 13, 14, 15, 19, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31};
 
 #define HEX(a) ((a >= '0' && a <= '9') || (a >= 'A' && a <= 'F') || (a >= 'a' && a <= 'f'))
 
@@ -115,7 +115,7 @@ typedef struct {
 #define INI_FILE_READ_ERR       ((0x2<<0)|0x80000000)
 #define INI_FILE_ILLEGAL        ((0x4<<0)|0x80000000)
 
-
+		      // -2147483640
 #define SHORT_TEST_ERROR        ((0x8<<0)|0x80000000)
 #define CFG_FILE_OPEN_ERR       ((0x1<<4)|0x80000000)
 #define CFG_FILE_READ_ERR       ((0x2<<4)|0x80000000)
@@ -181,8 +181,8 @@ typedef struct {
 #define _rRW_MISCTL__BOOTCTL_B0_        0x4190
 #define _rRW_MISCTL__BOOT_OPT_B0_       0x4218
 #define _bRW_MISCTL__RG_OSC_CALIB       0x4268
-#define _rRW_MISCTL__BOOT_CTL_          0x5094
-#define _rRW_MISCTL__SHORT_BOOT_FLAG    0x5095
+#define _rRW_MISCTL__BOOT_CTL_          0x5094	//0x4283
+#define _rRW_MISCTL__SHORT_BOOT_FLAG    0x5095	//0x4283
 
 /*-------------------------------test_externs----------------------------------*/
 extern int ini_read_int(char *file, const char *key);
@@ -309,7 +309,7 @@ long atof(char const *s);
 #endif
 
 #ifdef __cplusplus
-
+//}
 #endif
 
 #endif
