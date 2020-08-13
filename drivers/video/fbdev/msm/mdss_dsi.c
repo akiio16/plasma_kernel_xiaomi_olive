@@ -1,5 +1,5 @@
-/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
- * Copyright (C) 2019 XiaoMi, Inc.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2020 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -2947,7 +2947,7 @@ u32 white_point_num_g;
 u32 white_point_num_b;
 #endif
 
-#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE)
+#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
 char tp_lockdown_info[40] = {0};
 #endif
 
@@ -2964,7 +2964,7 @@ static struct device_node *mdss_dsi_find_panel_of_node(
 	char *wponit_str;
 #endif
 
-#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE)
+#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
 	char *tplock_str;
 #endif
 
@@ -2992,7 +2992,7 @@ static struct device_node *mdss_dsi_find_panel_of_node(
 		}
 #endif
 
-#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE)
+#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
 		tplock_str = strnstr(panel_cfg, ":tplock=", len);
 		if (!tplock_str) {
 			pr_err("%s:[tp lockdown info] tp lockdown info is not present in %s\n",
@@ -3091,6 +3091,11 @@ static struct device_node *mdss_dsi_find_panel_of_node(
 #endif
 		} else if (!strcmp(panel_name, "qcom,mdss_dsi_FT8006S_hdplus_video_c3i")) {
 			hq_regiser_hw_info(HWID_LCM, "incell,vendor:ebbg,IC:ft8006s(focal)");
+#ifdef CONFIG_WPONIT_ADJUST_FUN
+			white_point_num_r = 635332;
+			white_point_num_g = 306611;
+			white_point_num_b = 158059;
+#endif
 		} else {
 			hq_regiser_hw_info(HWID_LCM, "UNKNOWN PANEL");
 		}
