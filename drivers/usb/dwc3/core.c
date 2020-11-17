@@ -1090,6 +1090,7 @@ int dwc3_core_pre_init(struct dwc3 *dwc)
 			ret = -ENOMEM;
 		}
 	}
+
 	return ret;
 }
 
