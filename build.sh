@@ -48,9 +48,16 @@ for MODULES in $(find "${OUTDIR}" -name '*.ko'); do
             "${OUTDIR}/certs/signing_key.x509" \
             "${MODULES}"
     find "${OUTDIR}" -name '*.ko' -exec cp {} "${VENDOR_MODULEDIR}" \;
+    case ${MODULES} in
+            */wlan.ko)
+        cp "${MODULES}" "${VENDOR_MODULEDIR}/pronto_wlan.ko" ;;
+    esac
 done
 cd libufdt/src && python mkdtboimg.py create $OUTDIR/arch/arm64/boot/dtbo.img $OUTDIR/arch/arm64/boot/dts/qcom/*.dtbo
+
 echo -e "\n(i) Done moving modules"
+
+rm "${VENDOR_MODULEDIR}/wlan.ko"
 
 cd $ZIP_DIR
 cp $KERN_IMG zImage
