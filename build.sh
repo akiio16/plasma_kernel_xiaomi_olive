@@ -10,6 +10,9 @@ KERN_IMG=$KERNEL_DIR/out/arch/arm64/boot/Image.gz-dtb
 ZIP_DIR=$KERNEL_DIR/AnyKernel3
 CONFIG=dragonfire_olive_defconfig
 
+# Time compiling
+buildstart=$SECONDS
+
 # Export
 export ARCH=arm64
 export CROSS_COMPILE
@@ -95,6 +98,10 @@ cd $ZIP_DIR
 cp $KERN_IMG zImage
 cp $OUTDIR/arch/arm64/boot/dtbo.img $ZIP_DIR
 make normal &>/dev/null
+buildend=$(($SECONDS - $buildstart))
+buildendseconds=$(($buildend % 60))
+buildendminutes=$(($buildend / 60))
+echo "Build completed in ${buildendminutes} minute(s) and ${buildendseconds} second(s) !"
 echo "Flashable zip generated under $ZIP_DIR."
 cd ..
 # Build end
