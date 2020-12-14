@@ -7,9 +7,6 @@
 # Clone AnyKernel3
 git clone https://github.com/AstonishingBoy/AnyKernel3 -b dragonfire_olive
 
-#Download package
-sudo ./android_build_env.sh
-
 #Download Clang
 if [ ! -d $HOME/toolchains/proton-clang ]; then
 mkdir $HOME/toolchains
