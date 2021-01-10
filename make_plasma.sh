@@ -8,7 +8,7 @@
 KERNEL_DIR=$PWD
 KERN_IMG=$KERNEL_DIR/out/arch/arm64/boot/Image.gz-dtb
 ZIP_DIR=$KERNEL_DIR/AnyKernel3
-CONFIG=dragonfire_olive_defconfig
+CONFIG=plasma_olive-config
 
 # Time compiling
 buildstart=$SECONDS

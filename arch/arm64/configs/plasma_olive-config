@@ -1,4 +1,4 @@
-CONFIG_LOCALVERSION="-Dragonfire-Kernel+"
+CONFIG_LOCALVERSION="-PlasmaKernel++"
 # CONFIG_LOCALVERSION_AUTO is not set
 # CONFIG_FHANDLE is not set
 CONFIG_AUDIT=y
