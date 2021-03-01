@@ -467,7 +467,7 @@ static void exit_mm(struct task_struct *tsk)
 	struct core_state *core_state;
 	int mm_released;
 
-	mm_release(tsk, mm);
+	exit_mm_release(tsk, mm);
 	if (!mm)
 		return;
 	sync_mm_rss(mm);
@@ -690,6 +690,7 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
 	if (group_dead)
 		kill_orphaned_pgrp(tsk->group_leader, NULL);
 
+	tsk->exit_state = EXIT_ZOMBIE;
 	if (unlikely(tsk->ptrace)) {
 		int sig = thread_group_leader(tsk) &&
 				thread_group_empty(tsk) &&
@@ -809,7 +810,7 @@ void __noreturn do_exit(long code)
 		 * OWNER_DIED bit is set by now or we push the blocked
 		 * task into the wait for ever nirwana as well.
 		 */
-		tsk->flags |= PF_EXITPIDONE;
+		futex_exit_recursive(tsk);
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule();
 	}
@@ -818,10 +819,6 @@ void __noreturn do_exit(long code)
 
 	sched_exit(tsk);
 	schedtune_exit_task(tsk);
-
-	if (tsk->flags & PF_SU) {
-		su_exit();
-	}
 
 	/*
 	 * Ensure that all new tsk->pi_lock acquisitions must observe
@@ -899,12 +896,6 @@ void __noreturn do_exit(long code)
 	 * Make sure we are holding no locks:
 	 */
 	debug_check_no_locks_held();
-	/*
-	 * We can do this unlocked here. The futex code uses this flag
-	 * just to verify whether the pi state cleanup has been done
-	 * or not. In the worst case it loops once more.
-	 */
-	tsk->flags |= PF_EXITPIDONE;
 
 	if (tsk->io_context)
 		exit_io_context(tsk);
